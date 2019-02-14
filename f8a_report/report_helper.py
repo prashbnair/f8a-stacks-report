@@ -110,6 +110,18 @@ class ReportHelper:
             print('Error: %r' % e)
             return {}
         return out_dict
+    
+    def set_unique_stack_deps_count(self, unique_stacks_with_recurrence_count):
+        """Set the dependencies count against the identified unique stacks."""
+        out_dict = {}
+        for key in unique_stacks_with_recurrence_count.items():
+            new_dict = {}
+            for stack in key[1].items():
+                print(stack)
+                new_dict[stack[0]] = len(stack[0].split(','))
+            out_dict[key[0]] = new_dict
+        print(out_dict)
+        return out_dict
 
     def normalize_worker_data(self, stack_data, worker):
         """Normalize worker data for reporting."""
@@ -118,14 +130,14 @@ class ReportHelper:
             'stacks_summary': {},
             'stacks_details': []
         }
-        all_deps = []
-        all_unknown_deps = []
+        all_deps = {'npm': [], 'maven': []}
+        all_unknown_deps = {'npm': [], 'maven': []}
         all_unknown_lic = []
         all_cve_list = []
 
         total_resp_time = 0
         if worker == 'stack_aggregator_v2':
-            unique_stacks_with_recurrence_count, unique_stacks_with_deps_count = {}, {}
+            stacks_list = {'npm': [], 'maven': []}
             for data in stack_data:
                 stack_info_template = {
                     'ecosystem': '',
@@ -148,13 +160,15 @@ class ReportHelper:
                     stack_info_template['ecosystem'] = user_stack_info['ecosystem']
                     stack_info_template['stack'] = self.normalize_deps_list(
                         user_stack_info['dependencies'])
-                    all_deps.append(stack_info_template['stack'])
+                    all_deps[user_stack_info['ecosystem']].append(stack_info_template['stack'])
                     stack_str = ','.join(stack_info_template['stack'])
-                    if stack_str in unique_stacks_with_recurrence_count:
-                        unique_stacks_with_recurrence_count[stack_str] += 1
-                    else:
-                        unique_stacks_with_deps_count[stack_str] = len(stack_info_template['stack'])
-                        unique_stacks_with_recurrence_count[stack_str] = 1
+                    stacks_list[user_stack_info['ecosystem']].append(stack_str)
+
+                    # if stack_str in unique_stacks_with_recurrence_count:
+                    #     unique_stacks_with_recurrence_count[stack_str] += 1
+                    # else:
+                    #     unique_stacks_with_deps_count[stack_str] = len(stack_info_template['stack'])
+                    #     unique_stacks_with_recurrence_count[stack_str] = 1
 
                     unknown_dependencies = []
                     for dep in user_stack_info['unknown_dependencies']:
@@ -162,7 +176,8 @@ class ReportHelper:
                         unknown_dependencies.append(dep)
                     stack_info_template['unknown_dependencies'] = self.normalize_deps_list(
                         unknown_dependencies)
-                    all_unknown_deps.append(stack_info_template['unknown_dependencies'])
+                    all_unknown_deps[user_stack_info['ecosystem']].\
+                        append(stack_info_template['unknown_dependencies'])
 
                     stack_info_template['license']['unknown'] = \
                         user_stack_info['license_analysis']['unknown_licenses']['really_unknown']
@@ -184,20 +199,36 @@ class ReportHelper:
                     print('Error: %r' % e)
                     continue
 
+            unique_stacks_with_recurrence_count = {
+                'npm': self.populate_key_count(stacks_list['npm']),
+                'maven': self.populate_key_count(stacks_list['maven'])
+            }
+            unique_stacks_with_deps_count =\
+                self.set_unique_stack_deps_count(unique_stacks_with_recurrence_count)
+
             # generate aggregated data section
             template['stacks_summary'] = {
-                'unique_dependencies_with_usage':
-                    self.populate_key_count(self.flatten_list(all_deps)),
-                'unique_unknown_dependencies_with_usage':
-                    self.populate_key_count(self.flatten_list(all_unknown_deps)),
+                'npm': {
+                    'unique_dependencies_with_usage':
+                    self.populate_key_count(self.flatten_list(all_deps['npm'])),
+                    'unique_unknown_dependencies_with_usage':
+                    self.populate_key_count(self.flatten_list(all_unknown_deps['npm'])),
+                    'unique_stacks_with_usage': unique_stacks_with_recurrence_count['npm'],
+                    'unique_stacks_with_deps_count': unique_stacks_with_deps_count['npm']
+                    },
+                'maven': {'unique_dependencies_with_usage':
+                    self.populate_key_count(self.flatten_list(all_deps['maven'])),
+                    'unique_unknown_dependencies_with_usage':
+                    self.populate_key_count(self.flatten_list(all_unknown_deps['maven'])),
+                    'unique_stacks_with_usage': unique_stacks_with_recurrence_count['maven'],
+                    'unique_stacks_with_deps_count': unique_stacks_with_deps_count['maven']
+                    },
                 'unique_unknown_licenses_with_usage':
                     self.populate_key_count(self.flatten_list(all_unknown_lic)),
                 'unique_cves':
                     self.populate_key_count(all_cve_list),
                 'average_response_time':
                     '{} ms'.format(total_resp_time / len(template['stacks_details'])),
-                'unique_stacks_with_usage': unique_stacks_with_recurrence_count,
-                'unique_stacks_with_deps_count': unique_stacks_with_deps_count
             }
             return template
         else:
