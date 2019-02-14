@@ -110,7 +110,7 @@ class ReportHelper:
             print('Error: %r' % e)
             return {}
         return out_dict
-    
+
     def set_unique_stack_deps_count(self, unique_stacks_with_recurrence_count):
         """Set the dependencies count against the identified unique stacks."""
         out_dict = {}
@@ -164,12 +164,6 @@ class ReportHelper:
                     stack_str = ','.join(stack_info_template['stack'])
                     stacks_list[user_stack_info['ecosystem']].append(stack_str)
 
-                    # if stack_str in unique_stacks_with_recurrence_count:
-                    #     unique_stacks_with_recurrence_count[stack_str] += 1
-                    # else:
-                    #     unique_stacks_with_deps_count[stack_str] = len(stack_info_template['stack'])
-                    #     unique_stacks_with_recurrence_count[stack_str] = 1
-
                     unknown_dependencies = []
                     for dep in user_stack_info['unknown_dependencies']:
                         dep['package'] = dep.pop('name')
@@ -215,14 +209,15 @@ class ReportHelper:
                     self.populate_key_count(self.flatten_list(all_unknown_deps['npm'])),
                     'unique_stacks_with_usage': unique_stacks_with_recurrence_count['npm'],
                     'unique_stacks_with_deps_count': unique_stacks_with_deps_count['npm']
-                    },
-                'maven': {'unique_dependencies_with_usage':
-                    self.populate_key_count(self.flatten_list(all_deps['maven'])),
+                },
+                'maven': {
+                    'unique_dependencies_with_usage':
+                        self.populate_key_count(self.flatten_list(all_deps['maven'])),
                     'unique_unknown_dependencies_with_usage':
-                    self.populate_key_count(self.flatten_list(all_unknown_deps['maven'])),
+                        self.populate_key_count(self.flatten_list(all_unknown_deps['maven'])),
                     'unique_stacks_with_usage': unique_stacks_with_recurrence_count['maven'],
                     'unique_stacks_with_deps_count': unique_stacks_with_deps_count['maven']
-                    },
+                },
                 'unique_unknown_licenses_with_usage':
                     self.populate_key_count(self.flatten_list(all_unknown_lic)),
                 'unique_cves':
