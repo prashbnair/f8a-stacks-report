@@ -66,7 +66,7 @@ class ReportHelper:
 
         return id_list
 
-    def retrieve_worker_results(self, id_list=[], worker_list=[]):
+    def retrieve_worker_results(self, start_date, end_date, id_list=[], worker_list=[]):
         """Retrieve results for selected worker from RDB."""
         result = {}
         # convert the elements of the id_list to sql.Literal
@@ -84,7 +84,7 @@ class ReportHelper:
             data = json.dumps(cursor.fetchall())
 
             # associate the retrieved data to the worker name
-            result[worker] = self.normalize_worker_data(data, worker)
+            result[worker] = self.normalize_worker_data(start_date, end_date, data, worker)
         return result
 
     def flatten_list(self, alist):
@@ -117,16 +117,29 @@ class ReportHelper:
         for key in unique_stacks_with_recurrence_count.items():
             new_dict = {}
             for stack in key[1].items():
-                print(stack)
                 new_dict[stack[0]] = len(stack[0].split(','))
             out_dict[key[0]] = new_dict
-        print(out_dict)
         return out_dict
 
-    def normalize_worker_data(self, stack_data, worker):
+    def normalize_deps_list(self, deps):
+        """Flatten the dependencies dict into a list."""
+        normalized_list = []
+        for dep in deps:
+            normalized_list.append('{package} {version}'.format(package=dep['package'],
+                                                                version=dep['version']))
+        return sorted(normalized_list)
+
+    def normalize_worker_data(self, start_date, end_date, stack_data, worker):
         """Normalize worker data for reporting."""
+        total_stack_requests = {'all': 0, 'npm': 0, 'maven': 0}
+
         stack_data = json.loads(stack_data)
         template = {
+            'report': {
+                'from': start_date,
+                'to': end_date,
+                'generated_on': datetime.datetime.now().isoformat('T')
+            },
             'stacks_summary': {},
             'stacks_details': []
         }
@@ -135,7 +148,7 @@ class ReportHelper:
         all_unknown_lic = []
         all_cve_list = []
 
-        total_resp_time = 0
+        total_response_time = {'all': 0.0, 'npm': 0.0, 'maven': 0.0}
         if worker == 'stack_aggregator_v2':
             stacks_list = {'npm': [], 'maven': []}
             for data in stack_data:
@@ -158,6 +171,9 @@ class ReportHelper:
                         continue
 
                     stack_info_template['ecosystem'] = user_stack_info['ecosystem']
+                    total_stack_requests['all'] += 1
+                    total_stack_requests[stack_info_template['ecosystem']] += 1
+
                     stack_info_template['stack'] = self.normalize_deps_list(
                         user_stack_info['dependencies'])
                     all_deps[user_stack_info['ecosystem']].append(stack_info_template['stack'])
@@ -185,9 +201,11 @@ class ReportHelper:
 
                     end_date, start_date = \
                         data[0]['_audit']['ended_at'], data[0]['_audit']['started_at']
-                    stack_info_template['response_time'] = \
-                        '%f ms' % self.datediff_in_millisecs(start_date, end_date)
-                    total_resp_time += self.datediff_in_millisecs(start_date, end_date)
+
+                    response_time = self.datediff_in_millisecs(start_date, end_date)
+                    stack_info_template['response_time'] = '%f ms' % response_time
+                    total_response_time['all'] += response_time
+                    total_response_time[stack_info_template['ecosystem']] += response_time
                     template['stacks_details'].append(stack_info_template)
                 except (IndexError, KeyError, TypeError) as e:
                     print('Error: %r' % e)
@@ -202,37 +220,44 @@ class ReportHelper:
 
             # generate aggregated data section
             template['stacks_summary'] = {
+                'total_stack_requests_count': total_stack_requests['all'],
                 'npm': {
-                    'unique_dependencies_with_usage':
+                    'stack_requests_count': total_stack_requests['npm'],
+                    'unique_dependencies_with_frequency':
                     self.populate_key_count(self.flatten_list(all_deps['npm'])),
-                    'unique_unknown_dependencies_with_usage':
+                    'unique_unknown_dependencies_with_frequency':
                     self.populate_key_count(self.flatten_list(all_unknown_deps['npm'])),
-                    'unique_stacks_with_usage': unique_stacks_with_recurrence_count['npm'],
-                    'unique_stacks_with_deps_count': unique_stacks_with_deps_count['npm']
+                    'unique_stacks_with_frequency': unique_stacks_with_recurrence_count['npm'],
+                    'unique_stacks_with_deps_count': unique_stacks_with_deps_count['npm'],
+                    'average_response_time': '{} ms'.format(
+                        total_response_time['npm'] / total_stack_requests['npm'])
                 },
                 'maven': {
-                    'unique_dependencies_with_usage':
+                    'stack_requests_count': total_stack_requests['maven'],
+                    'total_stack_requests_count': total_stack_requests['maven'],
+                    'unique_dependencies_with_frequency':
                         self.populate_key_count(self.flatten_list(all_deps['maven'])),
-                    'unique_unknown_dependencies_with_usage':
+                    'unique_unknown_dependencies_with_frequency':
                         self.populate_key_count(self.flatten_list(all_unknown_deps['maven'])),
-                    'unique_stacks_with_usage': unique_stacks_with_recurrence_count['maven'],
-                    'unique_stacks_with_deps_count': unique_stacks_with_deps_count['maven']
+                    'unique_stacks_with_frequency': unique_stacks_with_recurrence_count['maven'],
+                    'unique_stacks_with_deps_count': unique_stacks_with_deps_count['maven'],
+                    'average_response_time': '{} ms'.format(
+                        total_response_time['maven'] / total_stack_requests['maven'])
                 },
-                'unique_unknown_licenses_with_usage':
+                'unique_unknown_licenses_with_frequency':
                     self.populate_key_count(self.flatten_list(all_unknown_lic)),
                 'unique_cves':
                     self.populate_key_count(all_cve_list),
-                'average_response_time':
-                    '{} ms'.format(total_resp_time / len(template['stacks_details'])),
+                'total_average_response_time':
+                    '{} ms'.format(total_response_time['all'] / len(template['stacks_details'])),
             }
             return template
         else:
             return None
 
-    def normalize_deps_list(self, deps):
-        """Flatten the dependencies dict into a list."""
-        normalized_list = []
-        for dep in deps:
-            normalized_list.append('{package} {version}'.format(package=dep['package'],
-                                                                version=dep['version']))
-        return sorted(normalized_list)
+    def get_report(self, start_date, end_date):
+        """Generate the stacks report."""
+        ids = self.retrieve_stack_analyses_ids(start_date, end_date)
+        worker_result = self.retrieve_worker_results(
+            start_date, end_date, ids, ['stack_aggregator_v2'])
+        return worker_result
