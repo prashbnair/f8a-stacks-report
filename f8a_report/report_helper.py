@@ -7,6 +7,7 @@ import datetime
 import psycopg2
 import psycopg2.extras
 import itertools
+import boto3
 from psycopg2 import sql
 
 logger = logging.getLogger(__file__)
@@ -26,13 +27,61 @@ class Postgres:
         self.cursor = self.conn.cursor()
 
 
-pg = Postgres()
-conn = pg.conn
-cursor = pg.cursor
+class S3Helper:
+    """Helper class for storing reports to S3."""
+
+    def __init__(self, frequency='weekly'):
+        """Init method for the helper class."""
+        self.region_name = os.environ.get('AWS_S3_REGION') or 'us-east-1'
+        self.aws_s3_access_key = os.environ.get('AWS_S3_ACCESS_KEY_ID')
+        self.aws_s3_secret_access_key = os.environ.get('AWS_S3_SECRET_ACCESS_KEY')
+        self.deployment_prefix = os.environ.get('DEPLOYMENT_PREFIX') or 'dev'
+        self.report_bucket_name = os.environ.get('REPORT_BUCKET_NAME')
+
+        if self.aws_s3_secret_access_key is None or self.aws_s3_access_key is None or\
+                self.region_name is None or self.deployment_prefix is None:
+            raise ValueError("AWS credentials or S3 configuration was "
+                             "not provided correctly. Please set the AWS_S3_REGION, "
+                             "AWS_S3_ACCESS_KEY_ID, AWS_S3_SECRET_ACCESS_KEY, REPORT_BUCKET_NAME "
+                             "and DEPLOYMENT_PREFIX correctly.")
+        # S3 endpoint URL is required only for local deployments
+        self.s3_endpoint_url = os.environ.get('S3_ENDPOINT_URL') or 'http://localhost'
+
+        self.s3 = boto3.resource('s3', region_name=self.region_name,
+                                 aws_access_key_id=self.aws_s3_access_key,
+                                 aws_secret_access_key=self.aws_s3_secret_access_key)
+        self.frequency = frequency
+
+    def store_json_content(self, content):
+        """Store the report content to the S3 storage."""
+        try:
+            if self.frequency == 'weekly':
+                filename = '{}.json'.format(datetime.datetime.now().strftime('%Y-%m-%d'))
+            elif self.frequency == 'monthly':
+                filename = '{}.json'.format(datetime.datetime.now().strftime('%Y-%m'))
+            else:
+                filename = 'dummy-{}.json'.format(datetime.datetime.now().strftime('%Y-%m-%d'))
+
+            bucket_key = '{dirname}/{freq}/{filename}'.format(dirname=self.deployment_prefix,
+                                                              freq=self.frequency,
+                                                              filename=filename)
+            print(bucket_key)
+            print(content)
+            self.s3.Object(self.report_bucket_name, bucket_key).put(Body=json.dumps(
+                                                                content, indent=2).encode('utf-8'))
+        except Exception as e:
+            print('%r' % e)
 
 
 class ReportHelper:
     """Stack Analyses report helper functions."""
+
+    def __init__(self):
+        """Init method for the Report helper class."""
+        self.s3 = S3Helper()
+        self.pg = Postgres()
+        self.conn = self.pg.conn
+        self.cursor = self.pg.cursor
 
     def validate_and_process_date(self, some_date):
         """Validate the date format and apply the format YYYY-MM-DDTHH:MI:SSZ."""
@@ -56,8 +105,8 @@ class ReportHelper:
             sql.Identifier('submitTime')
         )
 
-        cursor.execute(query.as_string(conn) % (start_date, end_date))
-        rows = cursor.fetchall()
+        self.cursor.execute(query.as_string(self.conn) % (start_date, end_date))
+        rows = self.cursor.fetchall()
 
         id_list = []
         for row in rows:
@@ -72,7 +121,7 @@ class ReportHelper:
         # convert the elements of the id_list to sql.Literal
         # so that the SQL query statement contains the IDs within quotes
         id_list = list(map(sql.Literal, id_list))
-        ids = sql.SQL(', ').join(id_list).as_string(conn)
+        ids = sql.SQL(', ').join(id_list).as_string(self.conn)
 
         for worker in worker_list:
             query = sql.SQL('SELECT {} FROM {} WHERE {} IN (%s) AND {} = \'%s\'').format(
@@ -80,8 +129,8 @@ class ReportHelper:
                 sql.Identifier('external_request_id'), sql.Identifier('worker')
             )
 
-            cursor.execute(query.as_string(conn) % (ids, worker))
-            data = json.dumps(cursor.fetchall())
+            self.cursor.execute(query.as_string(self.conn) % (ids, worker))
+            data = json.dumps(self.cursor.fetchall())
 
             # associate the retrieved data to the worker name
             result[worker] = self.normalize_worker_data(start_date, end_date, data, worker)
@@ -251,7 +300,7 @@ class ReportHelper:
                 'total_average_response_time':
                     '{} ms'.format(total_response_time['all'] / len(template['stacks_details'])),
             }
-            return template
+            self.s3.store_json_content(template)
         else:
             return None
 
