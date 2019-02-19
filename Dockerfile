@@ -14,5 +14,5 @@ RUN pip3 install --upgrade pip
 COPY f8a_report/ ${APP_DIR}/f8a_report
 COPY requirements.txt ${APP_DIR}
 RUN pip3 install -r requirements.txt
-CMD ["python3", "f8a_report/entryscript.py"]
+CMD ["python3", "f8a_report/main.py"]
 

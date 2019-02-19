@@ -30,7 +30,7 @@ class Postgres:
 class S3Helper:
     """Helper class for storing reports to S3."""
 
-    def __init__(self, frequency='weekly'):
+    def __init__(self):
         """Init method for the helper class."""
         self.region_name = os.environ.get('AWS_S3_REGION') or 'us-east-1'
         self.aws_s3_access_key = os.environ.get('AWS_S3_ACCESS_KEY_ID')
@@ -50,27 +50,24 @@ class S3Helper:
         self.s3 = boto3.resource('s3', region_name=self.region_name,
                                  aws_access_key_id=self.aws_s3_access_key,
                                  aws_secret_access_key=self.aws_s3_secret_access_key)
-        self.frequency = frequency
 
-    def store_json_content(self, content):
+    def store_json_content(self, content, start_date, end_date, frequency='weekly'):
         """Store the report content to the S3 storage."""
         try:
             if self.frequency == 'weekly':
-                filename = '{}.json'.format(datetime.datetime.now().strftime('%Y-%m-%d'))
+                filename = '{start}to{end}.json'.format(start=start_date, end=end_date)
             elif self.frequency == 'monthly':
-                filename = '{}.json'.format(datetime.datetime.now().strftime('%Y-%m'))
+                filename = '{}.json'.format(datetime.datetime.strptime('2019-01-31', '%Y-%m-%d').
+                                            strftime('%Y-%m'))
             else:
-                filename = 'dummy-{}.json'.format(datetime.datetime.now().strftime('%Y-%m-%d'))
+                filename = 'dummy-{start}to{end}.json'.format(start=start_date, end=end_date)
 
             bucket_key = '{dirname}/{freq}/{filename}'.format(dirname=self.deployment_prefix,
-                                                              freq=self.frequency,
-                                                              filename=filename)
-            print(bucket_key)
-            print(content)
+                                                              freq=frequency, filename=filename)
             self.s3.Object(self.report_bucket_name, bucket_key).put(Body=json.dumps(
                                                                 content, indent=2).encode('utf-8'))
         except Exception as e:
-            print('%r' % e)
+            logger.exception('%r' % e)
 
 
 class ReportHelper:
@@ -115,27 +112,6 @@ class ReportHelper:
 
         return id_list
 
-    def retrieve_worker_results(self, start_date, end_date, id_list=[], worker_list=[]):
-        """Retrieve results for selected worker from RDB."""
-        result = {}
-        # convert the elements of the id_list to sql.Literal
-        # so that the SQL query statement contains the IDs within quotes
-        id_list = list(map(sql.Literal, id_list))
-        ids = sql.SQL(', ').join(id_list).as_string(self.conn)
-
-        for worker in worker_list:
-            query = sql.SQL('SELECT {} FROM {} WHERE {} IN (%s) AND {} = \'%s\'').format(
-                sql.Identifier('task_result'), sql.Identifier('worker_results'),
-                sql.Identifier('external_request_id'), sql.Identifier('worker')
-            )
-
-            self.cursor.execute(query.as_string(self.conn) % (ids, worker))
-            data = json.dumps(self.cursor.fetchall())
-
-            # associate the retrieved data to the worker name
-            result[worker] = self.normalize_worker_data(start_date, end_date, data, worker)
-        return result
-
     def flatten_list(self, alist):
         """Convert a list of lists to a single list."""
         return list(itertools.chain.from_iterable(alist))
@@ -156,7 +132,7 @@ class ReportHelper:
                 else:
                     out_dict[item] = 1
         except (IndexError, KeyError, TypeError) as e:
-            print('Error: %r' % e)
+            logger.exception('Error: %r' % e)
             return {}
         return out_dict
 
@@ -178,7 +154,7 @@ class ReportHelper:
                                                                 version=dep['version']))
         return sorted(normalized_list)
 
-    def normalize_worker_data(self, start_date, end_date, stack_data, worker):
+    def normalize_worker_data(self, start_date, end_date, stack_data, worker, frequency='weekly'):
         """Normalize worker data for reporting."""
         total_stack_requests = {'all': 0, 'npm': 0, 'maven': 0}
 
@@ -257,7 +233,7 @@ class ReportHelper:
                     total_response_time[stack_info_template['ecosystem']] += response_time
                     template['stacks_details'].append(stack_info_template)
                 except (IndexError, KeyError, TypeError) as e:
-                    print('Error: %r' % e)
+                    logger.exception('Error: %r' % e)
                     continue
 
             unique_stacks_with_recurrence_count = {
@@ -300,13 +276,47 @@ class ReportHelper:
                 'total_average_response_time':
                     '{} ms'.format(total_response_time['all'] / len(template['stacks_details'])),
             }
-            self.s3.store_json_content(template)
+            try:
+                current_datetime = datetime.datetime.now()
+                self.s3.store_json_content(template, current_datetime, frequency)
+            except Exception as e:
+                logger.exception('Unable to store the report on S3. Reason: %r' % e)
+            return template
         else:
+            # todo: user feedback aggregation based on the recommendation task results
             return None
 
-    def get_report(self, start_date, end_date):
+    def retrieve_worker_results(self, start_date, end_date, id_list=[], worker_list=[],
+                                frequency='weekly'):
+        """Retrieve results for selected worker from RDB."""
+        result = {}
+        # convert the elements of the id_list to sql.Literal
+        # so that the SQL query statement contains the IDs within quotes
+        id_list = list(map(sql.Literal, id_list))
+        ids = sql.SQL(', ').join(id_list).as_string(self.conn)
+
+        for worker in worker_list:
+            query = sql.SQL('SELECT {} FROM {} WHERE {} IN (%s) AND {} = \'%s\'').format(
+                sql.Identifier('task_result'), sql.Identifier('worker_results'),
+                sql.Identifier('external_request_id'), sql.Identifier('worker')
+            )
+
+            self.cursor.execute(query.as_string(self.conn) % (ids, worker))
+            data = json.dumps(self.cursor.fetchall())
+
+            # associate the retrieved data to the worker name
+            result[worker] = self.normalize_worker_data(start_date, end_date, data, worker,
+                                                        frequency)
+        return result
+
+    def get_report(self, start_date, end_date, frequency='weekly'):
         """Generate the stacks report."""
         ids = self.retrieve_stack_analyses_ids(start_date, end_date)
-        worker_result = self.retrieve_worker_results(
-            start_date, end_date, ids, ['stack_aggregator_v2'])
-        return worker_result
+        if len(ids) > 0:
+            worker_result = self.retrieve_worker_results(
+                start_date, end_date, ids, ['stack_aggregator_v2'], frequency)
+            return worker_result
+        else:
+            logger.error('No stack analyses found from {s} to {e} to generate an aggregated report'
+                         .format(s=start_date, e=end_date))
+            return False
