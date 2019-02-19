@@ -54,16 +54,17 @@ class S3Helper:
     def store_json_content(self, content, start_date, end_date, frequency='weekly'):
         """Store the report content to the S3 storage."""
         try:
-            if self.frequency == 'weekly':
-                filename = '{start}to{end}.json'.format(start=start_date, end=end_date)
-            elif self.frequency == 'monthly':
-                filename = '{}.json'.format(datetime.datetime.strptime('2019-01-31', '%Y-%m-%d').
+            if frequency == 'weekly':
+                filename = '{start}-to-{end}.json'.format(start=start_date, end=end_date)
+            elif frequency == 'monthly':
+                filename = '{}.json'.format(datetime.datetime.strptime(end_date, '%Y-%m-%d').
                                             strftime('%Y-%m'))
             else:
-                filename = 'dummy-{start}to{end}.json'.format(start=start_date, end=end_date)
+                filename = 'dummy-{start}-to-{end}.json'.format(start=start_date, end=end_date)
 
             bucket_key = '{dirname}/{freq}/{filename}'.format(dirname=self.deployment_prefix,
                                                               freq=frequency, filename=filename)
+            logger.info('Storing the report into the S3 file %s' % bucket_key)
             self.s3.Object(self.report_bucket_name, bucket_key).put(Body=json.dumps(
                                                                 content, indent=2).encode('utf-8'))
         except Exception as e:
@@ -127,6 +128,10 @@ class ReportHelper:
         out_dict = {}
         try:
             for item in in_list:
+                if type(item) == dict:
+                    logger.error('Unexpected key encountered %r' % item)
+                    continue
+
                 if item in out_dict:
                     out_dict[item] += 1
                 else:
@@ -224,10 +229,10 @@ class ReportHelper:
                             all_cve_list.append('{cve}:{cvss}'.
                                                 format(cve=cve['CVE'], cvss=cve['CVSS']))
 
-                    end_date, start_date = \
+                    ended_at, started_at = \
                         data[0]['_audit']['ended_at'], data[0]['_audit']['started_at']
 
-                    response_time = self.datediff_in_millisecs(start_date, end_date)
+                    response_time = self.datediff_in_millisecs(started_at, ended_at)
                     stack_info_template['response_time'] = '%f ms' % response_time
                     total_response_time['all'] += response_time
                     total_response_time[stack_info_template['ecosystem']] += response_time
@@ -243,7 +248,19 @@ class ReportHelper:
             unique_stacks_with_deps_count =\
                 self.set_unique_stack_deps_count(unique_stacks_with_recurrence_count)
 
-            # generate aggregated data section
+            avg_response_time = {}
+            if total_stack_requests['npm'] > 0:
+                avg_response_time['npm'] = total_response_time['npm'] / total_stack_requests['npm']
+            else:
+                avg_response_time['npm'] = 0
+
+            if total_stack_requests['maven'] > 0:
+                avg_response_time['maven'] = \
+                    total_response_time['maven'] / total_stack_requests['maven']
+            else:
+                avg_response_time['maven'] = 0
+
+                # generate aggregated data section
             template['stacks_summary'] = {
                 'total_stack_requests_count': total_stack_requests['all'],
                 'npm': {
@@ -254,8 +271,7 @@ class ReportHelper:
                     self.populate_key_count(self.flatten_list(all_unknown_deps['npm'])),
                     'unique_stacks_with_frequency': unique_stacks_with_recurrence_count['npm'],
                     'unique_stacks_with_deps_count': unique_stacks_with_deps_count['npm'],
-                    'average_response_time': '{} ms'.format(
-                        total_response_time['npm'] / total_stack_requests['npm'])
+                    'average_response_time': '{} ms'.format(avg_response_time['npm'])
                 },
                 'maven': {
                     'stack_requests_count': total_stack_requests['maven'],
@@ -266,8 +282,7 @@ class ReportHelper:
                         self.populate_key_count(self.flatten_list(all_unknown_deps['maven'])),
                     'unique_stacks_with_frequency': unique_stacks_with_recurrence_count['maven'],
                     'unique_stacks_with_deps_count': unique_stacks_with_deps_count['maven'],
-                    'average_response_time': '{} ms'.format(
-                        total_response_time['maven'] / total_stack_requests['maven'])
+                    'average_response_time': '{} ms'.format(avg_response_time['maven'])
                 },
                 'unique_unknown_licenses_with_frequency':
                     self.populate_key_count(self.flatten_list(all_unknown_lic)),
@@ -277,8 +292,7 @@ class ReportHelper:
                     '{} ms'.format(total_response_time['all'] / len(template['stacks_details'])),
             }
             try:
-                current_datetime = datetime.datetime.now()
-                self.s3.store_json_content(template, current_datetime, frequency)
+                self.s3.store_json_content(template, start_date, end_date, frequency)
             except Exception as e:
                 logger.exception('Unable to store the report on S3. Reason: %r' % e)
             return template

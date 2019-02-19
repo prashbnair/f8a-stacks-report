@@ -34,11 +34,11 @@ PYTHONPATH=$(pwd)/f8a_report/
 export PYTHONPATH
 prepare_venv
 pip3 install -r requirements.txt
-
 pip3 install -r tests/requirements.txt
+pip3 install $(pwd)/.
 
 python3 "$(which pytest)" --cov=f8a_report/ --cov-report term-missing --cov-fail-under=$COVERAGE_THRESHOLD -vv tests
 
-codecov --token=3a540a46-f7e9-4050-b36a-97f81b948bcb
+codecov --token=d6bd6983-0bad-4eed-b8e3-9fd1d5199257
+printf "%stests passed%s\n\n" "${GREEN}" "${NORMAL}"
 
-echo "Test suite passed \\o/"
