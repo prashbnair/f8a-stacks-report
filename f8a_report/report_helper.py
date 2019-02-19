@@ -30,7 +30,7 @@ class Postgres:
 class S3Helper:
     """Helper class for storing reports to S3."""
 
-    def __init__(self, frequency='weekly'):
+    def __init__(self):
         """Init method for the helper class."""
         self.region_name = os.environ.get('AWS_S3_REGION') or 'us-east-1'
         self.aws_s3_access_key = os.environ.get('AWS_S3_ACCESS_KEY_ID')
@@ -50,27 +50,23 @@ class S3Helper:
         self.s3 = boto3.resource('s3', region_name=self.region_name,
                                  aws_access_key_id=self.aws_s3_access_key,
                                  aws_secret_access_key=self.aws_s3_secret_access_key)
-        self.frequency = frequency
 
-    def store_json_content(self, content):
+    def store_json_content(self, content, current_datetime, frequency='weekly'):
         """Store the report content to the S3 storage."""
         try:
             if self.frequency == 'weekly':
-                filename = '{}.json'.format(datetime.datetime.now().strftime('%Y-%m-%d'))
+                filename = '{}.json'.format(current_datetime.strftime('%Y-%m-%d'))
             elif self.frequency == 'monthly':
-                filename = '{}.json'.format(datetime.datetime.now().strftime('%Y-%m'))
+                filename = '{}.json'.format(current_datetime.strftime('%Y-%m'))
             else:
-                filename = 'dummy-{}.json'.format(datetime.datetime.now().strftime('%Y-%m-%d'))
+                filename = 'dummy-{}.json'.format(current_datetime.strftime('%Y-%m-%d'))
 
             bucket_key = '{dirname}/{freq}/{filename}'.format(dirname=self.deployment_prefix,
-                                                              freq=self.frequency,
-                                                              filename=filename)
-            print(bucket_key)
-            print(content)
+                                                              freq=frequency, filename=filename)
             self.s3.Object(self.report_bucket_name, bucket_key).put(Body=json.dumps(
                                                                 content, indent=2).encode('utf-8'))
         except Exception as e:
-            print('%r' % e)
+            logger.exception('%r' % e)
 
 
 class ReportHelper:
@@ -156,7 +152,7 @@ class ReportHelper:
                 else:
                     out_dict[item] = 1
         except (IndexError, KeyError, TypeError) as e:
-            print('Error: %r' % e)
+            logger.exception('Error: %r' % e)
             return {}
         return out_dict
 
@@ -257,7 +253,7 @@ class ReportHelper:
                     total_response_time[stack_info_template['ecosystem']] += response_time
                     template['stacks_details'].append(stack_info_template)
                 except (IndexError, KeyError, TypeError) as e:
-                    print('Error: %r' % e)
+                    logger.exception('Error: %r' % e)
                     continue
 
             unique_stacks_with_recurrence_count = {
@@ -300,7 +296,14 @@ class ReportHelper:
                 'total_average_response_time':
                     '{} ms'.format(total_response_time['all'] / len(template['stacks_details'])),
             }
-            self.s3.store_json_content(template)
+            try:
+                current_datetime = datetime.datetime.now()
+                self.s3.store_json_content(template, current_datetime, 'weekly')
+
+                if current_datetime.day in (1,2,3,4,5,6):
+                    self.s3.store_json_content(template, current_datetime, 'monthly')
+            except Exception as e:
+                logger.exception('Unable to store the report on S3. Reason: %r' % e)
         else:
             return None
 
