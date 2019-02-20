@@ -6,6 +6,9 @@ set -x
 # test coverage threshold
 COVERAGE_THRESHOLD=60
 
+export TERM=xterm
+TERM=${TERM:-xterm}
+
 # set up terminal colors
 NORMAL=$(tput sgr0)
 RED=$(tput bold && tput setaf 1)
