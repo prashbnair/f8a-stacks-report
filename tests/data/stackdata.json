@@ -1,0 +1,456 @@
+[
+	[{
+		"_audit": {
+			"version": "v1",
+			"ended_at": "2018-10-09T09:04:21.306749",
+			"started_at": "2018-10-09T09:04:21.082089"
+		},
+		"_release": "None:None:None",
+		"stack_data": [{
+			"manifest_name": "package.json",
+			"user_stack_info": {
+				"ecosystem": "npm",
+				"dependencies": [{
+					"package": "express",
+					"version": "4.0.0"
+				}, {
+					"package": "serve-static",
+					"version": "1.7.1"
+				}, {
+					"package": "npm",
+					"version": "6.2.0"
+				}],
+				"total_licenses": 1,
+				"license_analysis": {
+					"status": "Successful",
+					"outlier_packages": [],
+					"unknown_licenses": {
+						"really_unknown": [],
+						"component_conflict": []
+					},
+					"conflict_packages": [],
+					"f8a_stack_licenses": ["mit"],
+					"current_stack_license": {}
+				},
+				"distinct_licenses": ["MIT"],
+				"recommendation_ready": true,
+				"unknown_dependencies": [{
+					"name": "npm",
+					"version": "6.2.0"
+				}],
+				"analyzed_dependencies": [{
+					"name": "express",
+					"github": {
+						"size": "N/A",
+						"issues": {
+							"year": {
+								"closed": -1,
+								"opened": -1
+							},
+							"month": {
+								"closed": -1,
+								"opened": -1
+							}
+						},
+						"used_by": [{
+							"name": "Automattic/mongoose",
+							"stars": 14372
+						}, {
+							"name": "ReactTraining/react-router",
+							"stars": 27232
+						}, {
+							"name": "angular/angular.js",
+							"stars": 57749
+						}, {
+							"name": "angular/angular",
+							"stars": 31547
+						}, {
+							"name": "facebook/jest",
+							"stars": 14465
+						}, {
+							"name": "facebook/react",
+							"stars": 84669
+						}, {
+							"name": "postcss/autoprefixer",
+							"stars": 14331
+						}, {
+							"name": "reactjs/redux",
+							"stars": 36922
+						}, {
+							"name": "socketio/socket.io",
+							"stars": 38209
+						}, {
+							"name": "webpack/webpack",
+							"stars": 35429
+						}],
+						"forks_count": 6785,
+						"contributors": 30,
+						"pull_requests": {
+							"year": {
+								"closed": -1,
+								"opened": -1
+							},
+							"month": {
+								"closed": -1,
+								"opened": -1
+							}
+						},
+						"total_releases": "289",
+						"dependent_repos": "692200",
+						"stargazers_count": 38442,
+						"open_issues_count": 171,
+						"dependent_projects": "38012",
+						"first_release_date": "Apr 16, 2010",
+						"latest_release_duration": "2018-03-12 17:50:14"
+					},
+					"version": "4.0.0",
+					"licenses": ["MIT"],
+					"security": [{
+						"CVE": "CVE-2014-6393",
+						"CVSS": "4.3"
+					}],
+					"ecosystem": "npm",
+					"code_metrics": {
+						"code_lines": 4282,
+						"total_files": 20,
+						"average_cyclomatic_complexity": -1.0
+					},
+					"latest_version": "4.16.3",
+					"osio_user_count": 0,
+					"license_analysis": {
+						"status": "Successful",
+						"_message": "Representative license found",
+						"synonyms": {
+							"MIT": "mit"
+						},
+						"outlier_licenses": [],
+						"unknown_licenses": [],
+						"conflict_licenses": [],
+						"_representative_licenses": "mit"
+					}
+				}, {
+					"name": "serve-static",
+					"github": {
+						"size": "N/A",
+						"issues": {
+							"year": {
+								"closed": -1,
+								"opened": -1
+							},
+							"month": {
+								"closed": -1,
+								"opened": -1
+							}
+						},
+						"used_by": [{
+							"name": "angular/angular.js",
+							"stars": 56649
+						}, {
+							"name": "angular/angular",
+							"stars": 26784
+						}, {
+							"name": "expressjs/express",
+							"stars": 33280
+						}, {
+							"name": "facebook/jest",
+							"stars": 11606
+						}, {
+							"name": "facebook/react",
+							"stars": 73156
+						}, {
+							"name": "petkaantonov/bluebird",
+							"stars": 14927
+						}, {
+							"name": "postcss/autoprefixer",
+							"stars": 13198
+						}, {
+							"name": "postcss/postcss",
+							"stars": 15561
+						}, {
+							"name": "reactjs/redux",
+							"stars": 32837
+						}, {
+							"name": "webpack/webpack",
+							"stars": 30954
+						}],
+						"forks_count": 146,
+						"contributors": 10,
+						"pull_requests": {
+							"year": {
+								"closed": -1,
+								"opened": -1
+							},
+							"month": {
+								"closed": -1,
+								"opened": -1
+							}
+						},
+						"total_releases": "55",
+						"dependent_repos": "160539",
+						"stargazers_count": 906,
+						"open_issues_count": 7,
+						"dependent_projects": "2299",
+						"first_release_date": "Apr 16, 2010",
+						"latest_release_duration": "2018-02-07 18:38:40"
+					},
+					"version": "1.7.1",
+					"licenses": ["MIT"],
+					"security": [{
+						"CVE": "CVE-2015-1164",
+						"CVSS": "4.3"
+					}],
+					"ecosystem": "npm",
+					"code_metrics": {
+						"code_lines": 511,
+						"total_files": 4,
+						"average_cyclomatic_complexity": -1.0
+					},
+					"latest_version": "1.13.2",
+					"osio_user_count": 0,
+					"license_analysis": {
+						"status": "Successful",
+						"_message": "Representative license found",
+						"synonyms": {
+							"MIT": "mit"
+						},
+						"outlier_licenses": [],
+						"unknown_licenses": [],
+						"conflict_licenses": [],
+						"_representative_licenses": "mit"
+					}
+				}],
+				"stack_license_conflict": false,
+				"unknown_dependencies_count": 1,
+				"analyzed_dependencies_count": 2
+			},
+			"manifest_file_path": "/home/sam"
+		}]
+	}],
+	[{
+		"_audit": {
+			"version": "v1",
+			"ended_at": "2018-10-09T09:10:13.410094",
+			"started_at": "2018-10-09T09:10:13.286360"
+		},
+		"_release": "None:None:None",
+		"stack_data": [{
+			"manifest_name": "package.json",
+			"user_stack_info": {
+				"ecosystem": "npm",
+				"dependencies": [{
+					"package": "npm",
+					"version": "6.2.0"
+				}, {
+					"package": "express",
+					"version": "4.0.0"
+				}, {
+					"package": "serve-static",
+					"version": "1.7.1"
+				}],
+				"total_licenses": 1,
+				"license_analysis": {
+					"status": "Successful",
+					"outlier_packages": [],
+					"unknown_licenses": {
+						"really_unknown": [],
+						"component_conflict": []
+					},
+					"conflict_packages": [],
+					"f8a_stack_licenses": ["mit"],
+					"current_stack_license": {}
+				},
+				"distinct_licenses": ["MIT"],
+				"recommendation_ready": true,
+				"unknown_dependencies": [{
+					"name": "npm",
+					"version": "6.2.0"
+				}],
+				"analyzed_dependencies": [{
+					"name": "express",
+					"github": {
+						"size": "N/A",
+						"issues": {
+							"year": {
+								"closed": -1,
+								"opened": -1
+							},
+							"month": {
+								"closed": -1,
+								"opened": -1
+							}
+						},
+						"used_by": [{
+							"name": "Automattic/mongoose",
+							"stars": 14372
+						}, {
+							"name": "ReactTraining/react-router",
+							"stars": 27232
+						}, {
+							"name": "angular/angular.js",
+							"stars": 57749
+						}, {
+							"name": "angular/angular",
+							"stars": 31547
+						}, {
+							"name": "facebook/jest",
+							"stars": 14465
+						}, {
+							"name": "facebook/react",
+							"stars": 84669
+						}, {
+							"name": "postcss/autoprefixer",
+							"stars": 14331
+						}, {
+							"name": "reactjs/redux",
+							"stars": 36922
+						}, {
+							"name": "socketio/socket.io",
+							"stars": 38209
+						}, {
+							"name": "webpack/webpack",
+							"stars": 35429
+						}],
+						"forks_count": 6785,
+						"contributors": 30,
+						"pull_requests": {
+							"year": {
+								"closed": -1,
+								"opened": -1
+							},
+							"month": {
+								"closed": -1,
+								"opened": -1
+							}
+						},
+						"total_releases": "289",
+						"dependent_repos": "692200",
+						"stargazers_count": 38442,
+						"open_issues_count": 171,
+						"dependent_projects": "38012",
+						"first_release_date": "Apr 16, 2010",
+						"latest_release_duration": "2018-03-12 17:50:14"
+					},
+					"version": "4.0.0",
+					"licenses": ["MIT"],
+					"security": [{
+						"CVE": "CVE-2014-6393",
+						"CVSS": "4.3"
+					}],
+					"ecosystem": "npm",
+					"code_metrics": {
+						"code_lines": 4282,
+						"total_files": 20,
+						"average_cyclomatic_complexity": -1.0
+					},
+					"latest_version": "4.16.3",
+					"osio_user_count": 0,
+					"license_analysis": {
+						"status": "Successful",
+						"_message": "Representative license found",
+						"synonyms": {
+							"MIT": "mit"
+						},
+						"outlier_licenses": [],
+						"unknown_licenses": [],
+						"conflict_licenses": [],
+						"_representative_licenses": "mit"
+					}
+				}, {
+					"name": "serve-static",
+					"github": {
+						"size": "N/A",
+						"issues": {
+							"year": {
+								"closed": -1,
+								"opened": -1
+							},
+							"month": {
+								"closed": -1,
+								"opened": -1
+							}
+						},
+						"used_by": [{
+							"name": "angular/angular.js",
+							"stars": 56649
+						}, {
+							"name": "angular/angular",
+							"stars": 26784
+						}, {
+							"name": "expressjs/express",
+							"stars": 33280
+						}, {
+							"name": "facebook/jest",
+							"stars": 11606
+						}, {
+							"name": "facebook/react",
+							"stars": 73156
+						}, {
+							"name": "petkaantonov/bluebird",
+							"stars": 14927
+						}, {
+							"name": "postcss/autoprefixer",
+							"stars": 13198
+						}, {
+							"name": "postcss/postcss",
+							"stars": 15561
+						}, {
+							"name": "reactjs/redux",
+							"stars": 32837
+						}, {
+							"name": "webpack/webpack",
+							"stars": 30954
+						}],
+						"forks_count": 146,
+						"contributors": 10,
+						"pull_requests": {
+							"year": {
+								"closed": -1,
+								"opened": -1
+							},
+							"month": {
+								"closed": -1,
+								"opened": -1
+							}
+						},
+						"total_releases": "55",
+						"dependent_repos": "160539",
+						"stargazers_count": 906,
+						"open_issues_count": 7,
+						"dependent_projects": "2299",
+						"first_release_date": "Apr 16, 2010",
+						"latest_release_duration": "2018-02-07 18:38:40"
+					},
+					"version": "1.7.1",
+					"licenses": ["MIT"],
+					"security": [{
+						"CVE": "CVE-2015-1164",
+						"CVSS": "4.3"
+					}],
+					"ecosystem": "npm",
+					"code_metrics": {
+						"code_lines": 511,
+						"total_files": 4,
+						"average_cyclomatic_complexity": -1.0
+					},
+					"latest_version": "1.13.2",
+					"osio_user_count": 0,
+					"license_analysis": {
+						"status": "Successful",
+						"_message": "Representative license found",
+						"synonyms": {
+							"MIT": "mit"
+						},
+						"outlier_licenses": [],
+						"unknown_licenses": [],
+						"conflict_licenses": [],
+						"_representative_licenses": "mit"
+					}
+				}],
+				"stack_license_conflict": false,
+				"unknown_dependencies_count": 1,
+				"analyzed_dependencies_count": 2
+			},
+			"manifest_file_path": "/home/sam"
+		}]
+	}]
+]
