@@ -18,7 +18,6 @@ YELLOW=$(tput bold && tput setaf 3)
 printf "%sShutting down docker-compose ..." "${NORMAL}"
 gc() {
   retval=$?
-  deactivate
   docker-compose -f docker-compose.yml down -v || :
   rm -rf venv/
   exit $retval
