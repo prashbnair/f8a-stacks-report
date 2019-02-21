@@ -6,14 +6,33 @@ set -x
 # test coverage threshold
 COVERAGE_THRESHOLD=60
 
+export TERM=xterm
+TERM=${TERM:-xterm}
+
+# set up terminal colors
+NORMAL=$(tput sgr0)
+RED=$(tput bold && tput setaf 1)
+GREEN=$(tput bold && tput setaf 2)
+YELLOW=$(tput bold && tput setaf 3)
+
+printf "%sShutting down docker-compose ..." "${NORMAL}"
 gc() {
   retval=$?
-  deactivate
+  docker-compose -f docker-compose.yml down -v || :
   rm -rf venv/
   exit $retval
 }
 
 trap gc EXIT SIGINT
+
+function start_postgres {
+    #pushd local-setup/
+    echo "Invoke Docker Compose services"
+    docker-compose -f docker-compose.yml up  --force-recreate -d
+    #popd
+}
+
+start_postgres
 
 function prepare_venv() {
     VIRTUALENV=$(which virtualenv) || :
@@ -32,13 +51,24 @@ function prepare_venv() {
 }
 PYTHONPATH=$(pwd)/f8a_report/
 export PYTHONPATH
+
+export POSTGRESQL_USER='coreapi'
+export POSTGRESQL_PASSWORD='coreapipostgres'
+export POSTGRESQL_DATABASE='coreapi'
+export PGBOUNCER_SERVICE_HOST='0.0.0.0'
+export PGPORT="5432"
+export REPORT_BUCKET_NAME="not-set"
+export AWS_S3_ACCESS_KEY_ID="not-set"
+export AWS_S3_SECRET_ACCESS_KEY="not-set"
+export AWS_S3_REGION="not-set"
+
 prepare_venv
 pip3 install -r requirements.txt
-
 pip3 install -r tests/requirements.txt
+pip3 install $(pwd)/.
 
 python3 "$(which pytest)" --cov=f8a_report/ --cov-report term-missing --cov-fail-under=$COVERAGE_THRESHOLD -vv tests
 
-codecov --token=3a540a46-f7e9-4050-b36a-97f81b948bcb
+codecov --token=d6bd6983-0bad-4eed-b8e3-9fd1d5199257
+printf "%stests passed%s\n\n" "${GREEN}" "${NORMAL}"
 
-echo "Test suite passed \\o/"
