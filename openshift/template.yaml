@@ -27,7 +27,7 @@ objects:
             - name: f8a-stacks-report
               image: "${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${IMAGE_TAG}"
               env:
-                - name: AWS_SQS_SECRET_ACCESS_KEY
+                - name: AWS_S3_SECRET_ACCESS_KEY
                   valueFrom:
                     secretKeyRef:
                       name: aws
