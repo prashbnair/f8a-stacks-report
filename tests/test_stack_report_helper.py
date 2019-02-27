@@ -66,11 +66,11 @@ def test_normalize_deps_list():
 def test_normalize_deps_list_sorted():
     """Test the success scenario of the function normalize_deps_list."""
     deps_list = [{'package': 'abc', 'version': '1.0.0'},
-                 {'package': 'zzz', 'version': '2.0.0'},]
+                 {'package': 'zzz', 'version': '2.0.0'}]
     assert r.normalize_deps_list(deps_list) == ['abc 1.0.0', 'zzz 2.0.0']
 
     deps_list = [{'package': 'zzz', 'version': '1.0.0'},
-                 {'package': 'abc', 'version': '2.0.0'},]
+                 {'package': 'abc', 'version': '2.0.0'}]
     assert r.normalize_deps_list(deps_list) == ['zzz 1.0.0', 'abc 2.0.0']
 
 
