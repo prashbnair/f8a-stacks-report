@@ -48,6 +48,7 @@ function prepare_venv() {
         printf "%sPython virtual environment can't be initialized%s" "${RED}" "${NORMAL}"
         exit 1
     fi
+    printf "%sPython virtual environment initialized%s\n" "${YELLOW}" "${NORMAL}"
 }
 PYTHONPATH=$(pwd)/f8a_report/
 export PYTHONPATH
@@ -65,7 +66,7 @@ export AWS_S3_REGION="not-set"
 prepare_venv
 pip3 install -r requirements.txt
 pip3 install -r tests/requirements.txt
-pip3 install $(pwd)/.
+pip3 install "$(pwd)/."
 
 python3 "$(which pytest)" --cov=f8a_report/ --cov-report term-missing --cov-fail-under=$COVERAGE_THRESHOLD -vv tests
 
