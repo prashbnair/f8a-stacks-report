@@ -47,20 +47,46 @@ def test_datediff_in_millisecs_same_dates():
 
 def test_datediff_in_millisecs():
     """Test the success scenario of the function datediff_in_millisecs."""
+    start, end = '2018-08-23T17:05:52.0', '2018-08-23T17:05:53.1'
+    # the difference is always zero or positive
+    assert r.datediff_in_millisecs(start, end) == 100.0
+
     start, end = '2018-08-23T17:05:52.912429', '2018-08-23T17:05:53.624783'
+    # the difference is always zero or positive
     assert r.datediff_in_millisecs(start, end) == 712.354
 
 
-def test_datediff_in_millisecs_negative_result():
+def test_datediff_in_millisecs_no_negative_result():
     """Test the success scenario of the function datediff_in_millisecs."""
     start, end = '2018-08-23T17:05:53.624783', '2018-08-23T17:05:52.912429'
-    assert r.datediff_in_millisecs(start, end) == -287.646
+    # the difference is always zero or positive
+    assert r.datediff_in_millisecs(start, end) == 287.646
+
+
+def test_datediff_in_millisecs_one_sec_change():
+    """Test the success scenario of the function datediff_in_millisecs."""
+    start, end = '2018-08-23T17:05:52.0', '2018-08-24T17:05:53.0'
+    assert r.datediff_in_millisecs(start, end) == 0
+    assert r.datediff_in_millisecs(end, start) == 0
+
+
+def test_datediff_in_millisecs_one_day_change():
+    """Test the success scenario of the function datediff_in_millisecs."""
+    start, end = '2018-08-23T17:05:53.624783', '2018-08-24T17:05:53.624783'
+    assert r.datediff_in_millisecs(start, end) == 0
+    assert r.datediff_in_millisecs(end, start) == 0
 
 
 def test_normalize_deps_list():
     """Test the success scenario of the function normalize_deps_list."""
     deps_list = [{'package': 'abc', 'version': '1.0.0'}]
     assert r.normalize_deps_list(deps_list) == ['abc 1.0.0']
+
+
+def test_normalize_deps_list_empty_input():
+    """Test the success scenario of the function normalize_deps_list."""
+    deps_list = []
+    assert r.normalize_deps_list(deps_list) == []
 
 
 def test_normalize_deps_list_sorted():
@@ -102,3 +128,15 @@ def test_normalize_worker_data(_mock_count):
                                        stackdata, 'stack_aggregator_v2', 'weekly')
 
         assert resp is not None
+
+
+@mock.patch('f8a_report.report_helper.S3Helper.store_json_content', return_value=True)
+def test_normalize_worker_data_no_stack_aggregator(_mock_count):
+    """Test the success scenario of the function normalize_worker_data."""
+    with open('tests/data/stackdata.json', 'r') as f:
+        stackdata = f.read()
+        resp = r.normalize_worker_data('2018-10-10', '2018-10-18',
+                                       stackdata, 'something_different_from_stack_aggregator',
+                                       'weekly')
+
+        assert resp is None
