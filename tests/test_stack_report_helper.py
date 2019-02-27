@@ -54,7 +54,7 @@ def test_datediff_in_millisecs():
 def test_datediff_in_millisecs_negative_result():
     """Test the success scenario of the function datediff_in_millisecs."""
     start, end = '2018-08-23T17:05:53.624783', '2018-08-23T17:05:52.912429'
-    assert r.datediff_in_millisecs(start, end) == -712.354
+    assert r.datediff_in_millisecs(start, end) == -287.646
 
 
 def test_normalize_deps_list():
@@ -71,7 +71,7 @@ def test_normalize_deps_list_sorted():
 
     deps_list = [{'package': 'zzz', 'version': '1.0.0'},
                  {'package': 'abc', 'version': '2.0.0'}]
-    assert r.normalize_deps_list(deps_list) == ['zzz 1.0.0', 'abc 2.0.0']
+    assert r.normalize_deps_list(deps_list) == ['abc 2.0.0', 'zzz 1.0.0']
 
 
 def test_populate_key_count_success():
