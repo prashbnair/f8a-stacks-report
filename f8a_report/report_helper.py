@@ -3,12 +3,14 @@
 import os
 import json
 import logging
-import datetime
+from datetime import datetime as dt
 import psycopg2
 import psycopg2.extras
 import itertools
 import boto3
 from psycopg2 import sql
+from collections import Counter
+from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__file__)
 
@@ -51,24 +53,48 @@ class S3Helper:
                                  aws_access_key_id=self.aws_s3_access_key,
                                  aws_secret_access_key=self.aws_s3_secret_access_key)
 
-    def store_json_content(self, content, start_date, end_date, frequency='weekly'):
+    def store_json_content(self, content, bucket_name, obj_key):
         """Store the report content to the S3 storage."""
         try:
-            if frequency == 'weekly':
-                filename = '{start}-to-{end}.json'.format(start=start_date, end=end_date)
-            elif frequency == 'monthly':
-                filename = '{}.json'.format(datetime.datetime.strptime(end_date, '%Y-%m-%d').
-                                            strftime('%Y-%m'))
-            else:
-                filename = 'dummy-{start}-to-{end}.json'.format(start=start_date, end=end_date)
-
-            bucket_key = '{dirname}/{freq}/{filename}'.format(dirname=self.deployment_prefix,
-                                                              freq=frequency, filename=filename)
-            logger.info('Storing the report into the S3 file %s' % bucket_key)
-            self.s3.Object(self.report_bucket_name, bucket_key).put(Body=json.dumps(
-                                                                content, indent=2).encode('utf-8'))
+            logger.info('Storing the report into the S3 file %s' % obj_key)
+            self.s3.Object(bucket_name, obj_key).put(
+                Body=json.dumps(content, indent=2).encode('utf-8'))
         except Exception as e:
             logger.exception('%r' % e)
+
+    def read_json_object(self, bucket_name, obj_key):
+        """Get the report json object found on the S3 bucket."""
+        try:
+            obj = self.s3.Object(bucket_name, obj_key)
+            result = json.loads(obj.get()['Body'].read().decode('utf-8'))
+            return result
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'NoSuchKey':
+                logger.exception('No Such Key %s exists' % obj_key)
+            elif e.response['Error']['Code'] == 'NoSuchBucket':
+                logger.exception('ERROR - No Such Bucket %s exists' % bucket_name)
+            else:
+                logger.exception('%r' % e)
+            return None
+
+    def list_objects(self, bucket_name, frequency):
+        """Fetch the list of objects found on the S3 bucket."""
+        prefix = '{dp}/{freq}'.format(dp=self.deployment_prefix, freq=frequency)
+        res = {'objects': []}
+
+        try:
+            for obj in self.s3.Bucket(bucket_name).objects.filter(Prefix=prefix):
+                if os.path.basename(obj.key) != '':
+                    res['objects'].append(obj.key)
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'NoSuchKey':
+                logger.exception('ERROR - No Such Key %s exists' % prefix)
+            elif e.response['Error']['Code'] == 'NoSuchBucket':
+                logger.exception('ERROR - No Such Bucket %s exists' % bucket_name)
+            else:
+                logger.exception('%r' % e)
+
+        return res
 
 
 class ReportHelper:
@@ -80,11 +106,17 @@ class ReportHelper:
         self.pg = Postgres()
         self.conn = self.pg.conn
         self.cursor = self.pg.cursor
+        self.raw_data_file_list = os.getenv('RAW_DATA_FILE_NAMES',
+                                            'user-input,big-query').split(',')
+        self.npm_model_bucket = os.getenv('NPM_MODEL_BUCKET', 'cvae-insights')
+        self.maven_model_bucket = os.getenv('MAVEN_MODEL_BUCKET', 'hpf-insights')
+        self.pypi_model_bucket = os.getenv('PYPI_MODEL_BUCKET', 'hpf-insights')
+        self.golang_model_bucket = os.getenv('GOLANG_MODEL_BUCKET', 'golang-insights')
 
     def validate_and_process_date(self, some_date):
         """Validate the date format and apply the format YYYY-MM-DDTHH:MI:SSZ."""
         try:
-            datetime.datetime.strptime(some_date, '%Y-%m-%d')
+            dt.strptime(some_date, '%Y-%m-%d')
         except ValueError:
             raise ValueError("Incorrect data format, should be YYYY-MM-DD")
         return some_date
@@ -120,8 +152,8 @@ class ReportHelper:
     def datediff_in_millisecs(self, start_date, end_date):
         """Return the difference of two datetime strings in milliseconds."""
         format = '%Y-%m-%dT%H:%M:%S.%f'
-        return (datetime.datetime.strptime(end_date, format) -
-                datetime.datetime.strptime(start_date, format)).microseconds / 1000
+        return (dt.strptime(end_date, format) -
+                dt.strptime(start_date, format)).microseconds / 1000
 
     def populate_key_count(self, in_list=[]):
         """Generate a dict with the frequency of list elements."""
@@ -159,16 +191,86 @@ class ReportHelper:
                                                                 version=dep['version']))
         return sorted(normalized_list)
 
+    def collate_raw_data(self, unique_stacks_with_recurrence_count, frequency):
+        """Collate previous raw data with this week/month data."""
+        result = {}
+
+        # Get collated user input data
+        collated_user_input_obj_key = '{depl_prefix}/user-input-data/collated-{freq}.json'.format(
+            depl_prefix=self.s3.deployment_prefix, freq=frequency)
+        collated_user_input = self.s3.read_json_object(bucket_name=self.s3.report_bucket_name,
+                                                       obj_key=collated_user_input_obj_key) or {}
+
+        for eco in unique_stacks_with_recurrence_count.keys() | collated_user_input.keys():
+            result.update({eco: dict(
+                Counter(unique_stacks_with_recurrence_count.get(eco)) +
+                Counter(collated_user_input.get(eco)))
+            })
+
+        # Store user input collated data back to S3
+        self.s3.store_json_content(content=result, bucket_name=self.s3.report_bucket_name,
+                                   obj_key=collated_user_input_obj_key)
+
+        # Get collated big query data
+        collated_big_query_obj_key = '{depl_prefix}/big-query-data/collated.json'.format(
+            depl_prefix=self.s3.deployment_prefix)
+        collated_big_query_data = self.s3.read_json_object(bucket_name=self.s3.report_bucket_name,
+                                                           obj_key=collated_big_query_obj_key) or {}
+
+        for eco in result.keys() | collated_big_query_data.keys():
+            result.update({
+                eco: dict(Counter(result.get(eco)) +
+                          Counter(collated_big_query_data.get(eco)))
+                    })
+
+        return result
+
+    def store_training_data(self, result):
+        """Store Training Data for each ecosystem in their respective buckets."""
+        model_version = dt.now().strftime('%Y-%m-%d')
+
+        for eco, stacks in result.items():
+            obj_key = '{eco}/{depl_prefix}/{model_version}/data/manifest.json'.format(
+                eco=eco, depl_prefix=self.s3.deployment_prefix, model_version=model_version)
+            package_list_for_eco = []
+            for packages, reccurrence_count in stacks.items():
+                package_list = [x.strip().split(' ')[0] for x in packages.split(',')]
+                package_list_for_eco.append(package_list)
+
+            training_data = {
+                'ecosystem': eco,
+                'package_list': package_list_for_eco
+            }
+
+            # Get the bucket name based on ecosystems to store user-input stacks for retraining
+            if eco == 'maven':
+                bucket_name = self.maven_model_bucket
+            elif eco == 'pypi':
+                bucket_name = self.pypi_model_bucket
+            elif eco == 'go':
+                bucket_name = self.golang_model_bucket
+            elif eco == 'npm':
+                bucket_name = self.npm_model_bucket
+            else:
+                continue
+
+            if bucket_name:
+                logger.info('Storing user-input stacks for ecosystem {eco} at {dir}'.format(
+                    eco=eco, dir=bucket_name + obj_key))
+                self.s3.store_json_content(content=training_data, bucket_name=bucket_name,
+                                           obj_key=obj_key)
+
     def normalize_worker_data(self, start_date, end_date, stack_data, worker, frequency='weekly'):
         """Normalize worker data for reporting."""
         total_stack_requests = {'all': 0, 'npm': 0, 'maven': 0}
+        report_name = dt.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m-%d')
 
         stack_data = json.loads(stack_data)
         template = {
             'report': {
                 'from': start_date,
                 'to': end_date,
-                'generated_on': datetime.datetime.now().isoformat('T')
+                'generated_on': dt.now().isoformat('T')
             },
             'stacks_summary': {},
             'stacks_details': []
@@ -245,6 +347,14 @@ class ReportHelper:
                 'npm': self.populate_key_count(stacks_list['npm']),
                 'maven': self.populate_key_count(stacks_list['maven'])
             }
+
+            # Collate Data from Previous Month for Model Retraining
+            collated_data = self.collate_raw_data(unique_stacks_with_recurrence_count, frequency)
+
+            # Store ecosystem specific data to their respective Training Buckets
+            if frequency == 'weekly':
+                self.store_training_data(collated_data)
+
             unique_stacks_with_deps_count =\
                 self.set_unique_stack_deps_count(unique_stacks_with_recurrence_count)
 
@@ -292,7 +402,11 @@ class ReportHelper:
                     '{} ms'.format(total_response_time['all'] / len(template['stacks_details'])),
             }
             try:
-                self.s3.store_json_content(template, start_date, end_date, frequency)
+                obj_key = '{depl_prefix}/{freq}/{report_name}'.format(
+                    depl_prefix=self.s3.deployment_prefix, freq=frequency, report_name=report_name
+                )
+                self.s3.store_json_content(content=template, obj_key=obj_key,
+                                           bucket_name=self.s3.report_bucket_name)
             except Exception as e:
                 logger.exception('Unable to store the report on S3. Reason: %r' % e)
             return template
