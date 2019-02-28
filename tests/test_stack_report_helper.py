@@ -87,9 +87,17 @@ def test_flatten_list():
 
 def test_flatten_list_already_flat_list():
     """Test the success scenario of the function flatten_list."""
-    assert r.flatten_list([1]) == [1]
-    assert r.flatten_list([1, 2]) == [1, 2]
-    assert r.flatten_list([1, 2, 3, 4]) == [1, 2, 3, 4]
+    with pytest.raises(TypeError) as e:
+        r.flatten_list([1])
+        assert e.value == "TypeError: 'int' object is not iterable"
+
+    with pytest.raises(TypeError) as e:
+        r.flatten_list([1, 2]) == [1, 2]
+        assert e.value == "TypeError: 'int' object is not iterable"
+
+    with pytest.raises(TypeError) as e:
+        r.flatten_list([1, 2, 3, 4]) == [1, 2, 3, 4]
+        assert e.value == "TypeError: 'int' object is not iterable"
 
 
 def test_datediff_in_millisecs_same_dates():
