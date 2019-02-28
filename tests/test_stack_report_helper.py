@@ -4,8 +4,13 @@ from f8a_report.report_helper import ReportHelper, S3Helper, Postgres
 from pathlib import Path
 import pytest
 from unittest import mock
+import json
 
 r = ReportHelper()
+s = S3Helper()
+
+with open('tests/data/collateddata.json', 'r') as f:
+        collateddata = json.load(f)
 
 
 def test_validate_and_process_date_success():
@@ -174,14 +179,32 @@ def test_populate_key_count_failure():
         assert e.value == 'TypeError("unhashable type: \'list\'",)'
 
 
-def test_S3helper():
+def test_s3helper():
     """Test the failure scenario of the __init__ method of the class S3Helper."""
-    s = S3Helper()
     assert s.s3 is not None
 
 
 @mock.patch('f8a_report.report_helper.S3Helper.store_json_content', return_value=True)
-def test_normalize_worker_data(_mock_count):
+def test_store_training_data(_mock1):
+    """Test the success scenario for storing Retraining Data in their respective buckets."""
+    resp = r.store_training_data(collateddata)
+
+    assert resp is None
+
+
+@mock.patch('f8a_report.report_helper.S3Helper.store_json_content', return_value=True)
+@mock.patch('f8a_report.report_helper.S3Helper.read_json_object', return_value=collateddata)
+def test_collate_raw_data(_mock1, _mock2):
+    """Test result collation success scenario."""
+    result = r.collate_raw_data(collateddata, 'weekly')
+
+    assert result is not None
+
+
+@mock.patch('f8a_report.report_helper.S3Helper.store_json_content', return_value=True)
+@mock.patch('f8a_report.report_helper.ReportHelper.collate_raw_data', return_value=collateddata)
+@mock.patch('f8a_report.report_helper.ReportHelper.store_training_data', return_value=True)
+def test_normalize_worker_data(_mock1, _mock2, _mock3):
     """Test the success scenario of the function normalize_worker_data."""
     with open('tests/data/stackdata.json', 'r') as f:
         stackdata = f.read()
