@@ -7,7 +7,7 @@ class TodayMockClass:
     """Mock class for `today` from datetime module."""
 
     def __init__(self, day):
-        """Constructor that initializes day attribute."""
+        """Construct the class and initialize day attribute."""
         self.day = day
 
 
