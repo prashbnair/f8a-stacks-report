@@ -17,6 +17,17 @@ def test_validate_and_process_date_success():
     assert res == '1900-01-01'
 
 
+def test_validate_and_process_date_no_real_dates():
+    """Test the failure scenario of the function validate_and_process_date."""
+    with pytest.raises(ValueError) as e:
+        r.validate_and_process_date('2019-01-32')
+        assert str(e.value) == 'Incorrect data format, should be YYYY-MM-DD'
+
+    with pytest.raises(ValueError) as e:
+        r.validate_and_process_date('0000-01-01')
+        assert str(e.value) == 'Incorrect data format, should be YYYY-MM-DD'
+
+
 def test_validate_and_process_date_failure():
     """Test the failure scenario of the function validate_and_process_date."""
     with pytest.raises(ValueError) as e:
@@ -28,6 +39,39 @@ def test_validate_and_process_date_failure():
         assert str(e.value) == 'Incorrect data format, should be YYYY-MM-DD'
 
 
+def test_retrieve_stack_analyses_ids_wrong_dates():
+    """Test the failure scenario of the function retrieve_stack_analyses_ids."""
+    # both dates are incorrect
+    with pytest.raises(ValueError) as e:
+        r.retrieve_stack_analyses_ids('xyzabc', 'foobar')
+        assert str(e.value) == 'Invalid date format'
+
+    # start_date is incorrect
+    with pytest.raises(ValueError) as e:
+        r.retrieve_stack_analyses_ids('foobar', '2019-01-01')
+        assert str(e.value) == 'Invalid date format'
+
+    # start_date is incorrect
+    with pytest.raises(ValueError) as e:
+        r.retrieve_stack_analyses_ids('0000-01-01', '2019-01-01')
+        assert str(e.value) == 'Invalid date format'
+
+    # start_date is incorrect
+    with pytest.raises(ValueError) as e:
+        r.retrieve_stack_analyses_ids('2019-01-32', '2019-01-01')
+        assert str(e.value) == 'Invalid date format'
+
+    # end_date is incorrect
+    with pytest.raises(ValueError) as e:
+        r.retrieve_stack_analyses_ids('2019-01-01', 'foobar')
+        assert str(e.value) == 'Invalid date format'
+
+    # end_date is incorrect
+    with pytest.raises(ValueError) as e:
+        r.retrieve_stack_analyses_ids('2019-01-01', '2019-01-32')
+        assert str(e.value) == 'Invalid date format'
+
+
 def test_flatten_list_empty_input():
     """Test the success scenario of the function flatten_list."""
     assert r.flatten_list([]) == []
@@ -36,7 +80,16 @@ def test_flatten_list_empty_input():
 
 def test_flatten_list():
     """Test the success scenario of the function flatten_list."""
+    assert r.flatten_list([[1]]) == [1]
+    assert r.flatten_list([[1, 2]]) == [1, 2]
     assert r.flatten_list([[1, 2], [3, 4]]) == [1, 2, 3, 4]
+
+
+def test_flatten_list_already_flat_list():
+    """Test the success scenario of the function flatten_list."""
+    assert r.flatten_list([1]) == [1]
+    assert r.flatten_list([1, 2]) == [1, 2]
+    assert r.flatten_list([1, 2, 3, 4]) == [1, 2, 3, 4]
 
 
 def test_datediff_in_millisecs_same_dates():
