@@ -95,7 +95,7 @@ class ReportHelper:
             start_date = self.validate_and_process_date(start_date)
             end_date = self.validate_and_process_date(end_date)
         except ValueError:
-            raise "Invalid date format"
+            raise ValueError("Invalid date format")
 
         # Avoiding SQL injection
         query = sql.SQL('SELECT {} FROM {} WHERE {} BETWEEN \'%s\' AND \'%s\'').format(
