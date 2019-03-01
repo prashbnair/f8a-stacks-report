@@ -261,7 +261,10 @@ class ReportHelper:
     def normalize_worker_data(self, start_date, end_date, stack_data, worker, frequency='weekly'):
         """Normalize worker data for reporting."""
         total_stack_requests = {'all': 0, 'npm': 0, 'maven': 0}
-        report_name = dt.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m-%d')
+        if frequency == 'monthly':
+            report_name = dt.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m')
+        else:
+            report_name = dt.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m-%d')
 
         stack_data = json.loads(stack_data)
         template = {
