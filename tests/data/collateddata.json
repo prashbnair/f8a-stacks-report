@@ -7,6 +7,7 @@
         "flask 1.2.3, sqlalchemy 1.4.3": 10
     },
     "maven": {
-        "io.vertx:vertx-core 3.4.2,io.vertx:vertx-web 3.4.2": 1
+        "io.vertx:vertx-core 3.4.2,io.vertx:vertx-web 3.4.2": 1,
+        "io.vertx:vertx-core 3.4.1,io.vertx:vertx-web 3.4.1": 1
     }
 }
