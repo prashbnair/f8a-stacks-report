@@ -228,12 +228,16 @@ class ReportHelper:
         model_version = dt.now().strftime('%Y-%m-%d')
 
         for eco, stacks in result.items():
+            unique_stacks = {}
             obj_key = '{eco}/{depl_prefix}/{model_version}/data/manifest.json'.format(
                 eco=eco, depl_prefix=self.s3.deployment_prefix, model_version=model_version)
             package_list_for_eco = []
             for packages, reccurrence_count in stacks.items():
                 package_list = [x.strip().split(' ')[0] for x in packages.split(',')]
-                package_list_for_eco.append(package_list)
+                stack_str = "".join(package_list)
+                if stack_str not in unique_stacks:
+                    unique_stacks[stack_str] = 1
+                    package_list_for_eco.append(package_list)
 
             training_data = {
                 'ecosystem': eco,
