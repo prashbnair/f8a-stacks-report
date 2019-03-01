@@ -403,7 +403,7 @@ class ReportHelper:
                     '{} ms'.format(total_response_time['all'] / len(template['stacks_details'])),
             }
             try:
-                obj_key = '{depl_prefix}/{freq}/{report_name}'.format(
+                obj_key = '{depl_prefix}/{freq}/{report_name}.json'.format(
                     depl_prefix=self.s3.deployment_prefix, freq=frequency, report_name=report_name
                 )
                 self.s3.store_json_content(content=template, obj_key=obj_key,
