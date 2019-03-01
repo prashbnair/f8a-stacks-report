@@ -66,6 +66,14 @@ objects:
                       name: coreapi-postgres
                 - name: REPORT_BUCKET_NAME
                   value: developer-analytics-audit-report
+                - name: NPM_MODEL_BUCKET
+                  value: ${NPM_MODEL_BUCKET}
+                - name: MAVEN_MODEL_BUCKET
+                  value: ${MAVEN_MODEL_BUCKET}
+                - name: PYPI_MODEL_BUCKET
+                  value: ${PYPI_MODEL_BUCKET}
+                - name: GOLANG_MODEL_BUCKET
+                  value: ${GOLANG_MODEL_BUCKET}
               resources:
                 requests:
                   memory: ${MEMORY_REQUEST}
@@ -121,3 +129,28 @@ parameters:
   required: true
   name: MEMORY_LIMIT
   value: "1024Mi"
+
+- description: "NPM Model Bucket to put collated data"
+  displayName: Model Version
+  required: true
+  name: NPM_MODEL_BUCKET
+  value: "cvae-insights"
+
+- description: "Maven Model Bucket to put collated data"
+  displayName: Model Version
+  required: true
+  name: MAVEN_MODEL_BUCKET
+  value: "hpf-insights"
+
+- description: "Python Model Bucket to put collated data"
+  displayName: Model Version
+  required: true
+  name: PYPI_MODEL_BUCKET
+  value: "hpf-insights"
+
+- description: "Golang Model Bucket to put collated data"
+  displayName: Model Version
+  required: true
+  name: GOLANG_MODEL_BUCKET
+  value: "golang-insights"
+

@@ -10,7 +10,10 @@ r = ReportHelper()
 s = S3Helper()
 
 with open('tests/data/collateddata.json', 'r') as f:
-        collateddata = json.load(f)
+    collateddata = json.load(f)
+
+with open('tests/data/stackdata.json', 'r') as f:
+    stackdata = f.read()
 
 
 def test_validate_and_process_date_success():
@@ -206,21 +209,39 @@ def test_collate_raw_data(_mock1, _mock2):
 @mock.patch('f8a_report.report_helper.ReportHelper.store_training_data', return_value=True)
 def test_normalize_worker_data(_mock1, _mock2, _mock3):
     """Test the success scenario of the function normalize_worker_data."""
-    with open('tests/data/stackdata.json', 'r') as f:
-        stackdata = f.read()
-        resp = r.normalize_worker_data('2018-10-10', '2018-10-18',
-                                       stackdata, 'stack_aggregator_v2', 'weekly')
+    resp = r.normalize_worker_data('2018-10-10', '2018-10-18',
+                                   stackdata, 'stack_aggregator_v2', 'weekly')
 
-        assert resp is not None
+    assert resp is not None
 
 
 @mock.patch('f8a_report.report_helper.S3Helper.store_json_content', return_value=True)
 def test_normalize_worker_data_no_stack_aggregator(_mock_count):
     """Test the success scenario of the function normalize_worker_data."""
-    with open('tests/data/stackdata.json', 'r') as f:
-        stackdata = f.read()
-        resp = r.normalize_worker_data('2018-10-10', '2018-10-18',
-                                       stackdata, 'something_different_from_stack_aggregator',
-                                       'weekly')
+    resp = r.normalize_worker_data('2018-10-10', '2018-10-18',
+                                   stackdata, 'something_different_from_stack_aggregator',
+                                   'weekly')
 
-        assert resp is None
+    assert resp is None
+
+
+@mock.patch('f8a_report.report_helper.ReportHelper.retrieve_worker_results', return_value=True)
+@mock.patch('f8a_report.report_helper.ReportHelper.retrieve_stack_analyses_ids', return_value=['1'])
+def test_get_report(_mock1, _mock2):
+    """Test sucess Get Report."""
+    res = r.get_report('2018-10-10', '2018-10-18')
+    assert res is True
+
+
+@mock.patch('f8a_report.report_helper.ReportHelper.retrieve_worker_results', return_value=True)
+@mock.patch('f8a_report.report_helper.ReportHelper.retrieve_stack_analyses_ids', return_value=[])
+def test_get_report(_mock1, _mock2):
+    """Test failure Get Report."""
+    res = r.get_report('2018-10-10', '2018-10-18')
+    assert res is False
+
+
+def test_retrieve_worker_results():
+    """Test failure worker results."""
+    res = r.retrieve_worker_results('2018-10-10', '2018-10-18', ['1', '2'], [])
+    assert res == {}

@@ -106,8 +106,6 @@ class ReportHelper:
         self.pg = Postgres()
         self.conn = self.pg.conn
         self.cursor = self.pg.cursor
-        self.raw_data_file_list = os.getenv('RAW_DATA_FILE_NAMES',
-                                            'user-input,big-query').split(',')
         self.npm_model_bucket = os.getenv('NPM_MODEL_BUCKET', 'cvae-insights')
         self.maven_model_bucket = os.getenv('MAVEN_MODEL_BUCKET', 'hpf-insights')
         self.pypi_model_bucket = os.getenv('PYPI_MODEL_BUCKET', 'hpf-insights')
