@@ -20,11 +20,11 @@ def main():
 
     today = dt.today()
 
-    start_date = (today - timedelta(days=7)).strftime('%Y-%m-%d')
+    start_date = (today - timedelta(days=1)).strftime('%Y-%m-%d')
     end_date = (today - timedelta(days=1)).strftime('%Y-%m-%d')
-    weekly_response = r.get_report(start_date, end_date, 'weekly')
-    logger.debug('Weekly report data from {s} to {e}'.format(s=start_date, e=end_date))
-    logger.debug(json.dumps(weekly_response, indent=2))
+    daily_response = r.get_report(start_date, end_date, 'daily')
+    logger.debug('Daily report data from {s} to {e}'.format(s=start_date, e=end_date))
+    logger.debug(json.dumps(daily_response, indent=2))
 
     if time_to_generate_monthly_report(today):
         last_day_of_prev_month = date(today.year, today.month, 1) - timedelta(days=1)
