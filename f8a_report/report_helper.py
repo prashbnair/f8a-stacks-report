@@ -509,6 +509,7 @@ class ReportHelper:
         all_epv_list = {'npm': [], 'maven': [], 'python': []}
         failed_epv_list = {'npm': [], 'maven': [], 'python': []}
 
+        # marshalling the total ingested epv data according to the ecosystems
         epv_data = ingestion_data['EPV_INGESTION_DATA']
         epv_data = json.loads(epv_data)
         for data in epv_data:
@@ -522,7 +523,10 @@ class ReportHelper:
             elif data[0] == 'python':
                 all_deps_count['python'] = all_deps_count['python'] + 1
                 all_epv_list['python'].append(data[1] + '::' + data[2])
+            else:
+                continue
 
+        # marshalling the total failed epv data ingested according to the ecosystems
         failed_epv_data = ingestion_data['EPV_GRAPH_FAILED_DATA']
         failed_epv_data = json.loads(failed_epv_data)
         for data in failed_epv_data:
@@ -536,7 +540,10 @@ class ReportHelper:
             elif data[0] == 'python':
                 failed_deps_count['python'] = failed_deps_count['python'] + 1
                 failed_epv_list['python'].append(data[1] + '::' + data[2])
+            else:
+                continue
 
+        # creating the epv ingestion details info according to the ecosystems
         for epv_data in all_epv_list:
             ingestion_info_template = {
                 'ecosystem': '',
@@ -555,6 +562,7 @@ class ReportHelper:
             elif data['ecosystem'] == 'python':
                 data['failed_epvs'] = failed_epv_list['python']
 
+        # creating the epv ingestion statistics info according to the ecosystems
         template['ingestion_summary'] = {
             'total_epv_ingestion_count': all_deps_count['all'],
             'npm': {
@@ -580,6 +588,7 @@ class ReportHelper:
             }
         }
 
+        # Saving the final report in the relevant S3 bucket
         try:
             obj_key = '{depl_prefix}/{type}/{report_name}.json'.format(
                 depl_prefix=self.s3.deployment_prefix, type=report_type, report_name=report_name
