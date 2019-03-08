@@ -11,7 +11,8 @@ logger = logging.getLogger(__file__)
 
 def time_to_generate_monthly_report(today):
     """Check whether it is the right time to generate monthly report."""
-    return today.day in (1, 2, 3, 4, 5, 6, 7)
+    # We will make three attempts to generate the monthly report every month
+    return today.day in (1, 2, 3)
 
 
 def main():

@@ -140,6 +140,7 @@ class ReportHelper:
                 sql.Identifier('submitTime')
             )
             self.cursor.execute(query.as_string(self.conn) % (start_date, end_date))
+
         rows = self.cursor.fetchall()
 
         id_list = []
@@ -359,12 +360,18 @@ class ReportHelper:
                 'maven': self.populate_key_count(stacks_list['maven'])
             }
 
-            # Collate Data from Previous Month for Model Retraining
-            collated_data = self.collate_raw_data(unique_stacks_with_recurrence_count, frequency)
-
-            # Store ecosystem specific data to their respective Training Buckets
-            if frequency == 'weekly':
+            today = dt.today()
+            # Invoke this every Monday. In Python, Monday is 0 and Sunday is 6
+            if today.weekday() == 0:
+                # Collate Data from Previous Month for Model Retraining
+                collated_data = self.collate_raw_data(unique_stacks_with_recurrence_count,
+                                                      'weekly')
+                # Store ecosystem specific data to their respective Training Buckets
                 self.store_training_data(collated_data)
+
+            # Monthly data collection on the 1st of every month
+            if today.date == 1:
+                self.collate_raw_data(unique_stacks_with_recurrence_count, 'monthly')
 
             unique_stacks_with_deps_count =\
                 self.set_unique_stack_deps_count(unique_stacks_with_recurrence_count)
