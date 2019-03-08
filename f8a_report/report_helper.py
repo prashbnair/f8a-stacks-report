@@ -602,7 +602,7 @@ class ReportHelper:
                 ingestion_results = True
             else:
                 ingestion_results = False
-                logger.error('No ingestion data found from {s} to {e} to generate an aggregated report'
+                logger.error('No ingestion data found from {s} to {e} to generate report'
                              .format(s=start_date, e=end_date))
         if len(ids) > 0:
             worker_result = self.retrieve_worker_results(

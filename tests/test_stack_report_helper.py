@@ -19,6 +19,7 @@ with open('tests/data/ingestiondata.json', 'r') as f:
     ingestiondata = f.read()
     ingestiondata = json.loads(ingestiondata)
 
+
 def test_validate_and_process_date_success():
     """Test the success scenario of the function validate_and_process_date."""
     res = r.validate_and_process_date('2019-01-01')
@@ -238,7 +239,9 @@ def test_get_report(_mock1, _mock2):
 
 @mock.patch('f8a_report.report_helper.ReportHelper.retrieve_worker_results', return_value=True)
 @mock.patch('f8a_report.report_helper.ReportHelper.retrieve_stack_analyses_ids', return_value=[])
-def test_get_report(_mock1, _mock2):
+@mock.patch('f8a_report.report_helper.ReportHelper.retrieve_ingestion_results',
+            return_value=ingestiondata)
+def test_get_report(_mock1, _mock2, _mock3):
     """Test failure Get Report."""
     res, ing_res = r.get_report('2018-10-10', '2018-10-18')
     assert res is False
@@ -255,9 +258,3 @@ def test_normalize_ingestion_data(_mock1):
     """Test the success scenario of the function normalize_worker_data."""
     resp = r.normalize_ingestion_data('2018-10-10', '2018-10-18', ingestiondata, 'daily')
     assert resp is not None
-
-
-def test_retrieve_ingestion_results():
-    """Test failure worker results."""
-    res = r.retrieve_ingestion_results('2015-10-10', '2015-10-18')
-    assert res == {'EPV_GRAPH_FAILED_DATA': '[]', 'EPV_INGESTION_DATA': '[]'}
