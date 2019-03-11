@@ -82,6 +82,8 @@ objects:
                   value: ${NPM_TRAINING_REPO}
                 - name: PYPI_TRAINING_REPO
                   value: ${PYPI_TRAINING_REPO}
+                - name: GREMLIN_QUERY_SIZE
+                  value: ${GREMLIN_QUERY_SIZE}
               resources:
                 requests:
                   memory: ${MEMORY_REQUEST}

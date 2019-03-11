@@ -66,6 +66,8 @@ export AWS_S3_REGION="not-set"
 prepare_venv
 pip3 install -r requirements.txt
 pip3 install -r tests/requirements.txt
+pip3 install git+https://github.com/fabric8-analytics/fabric8-analytics-utils.git@d7aaccf
+pip3 install git+https://git@github.com/fabric8-analytics/fabric8-analytics-version-comparator.git#egg=f8a_version_comparator
 pip3 install "$(pwd)/."
 
 python3 "$(which pytest)" --cov=f8a_report/ --cov-report term-missing --cov-fail-under=$COVERAGE_THRESHOLD -vv tests
