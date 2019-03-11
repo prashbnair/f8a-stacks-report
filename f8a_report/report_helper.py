@@ -250,17 +250,18 @@ class ReportHelper:
             'ecosystem': ecosystem,
             'data_version': data_version
         }
-        url = self.emr_api + '/api/v1/runjob'
+
         try:
-            resp = requests.post(url=url, json=payload)
+            # Invoke EMR API to run the retraining
+            resp = requests.post(url=self.emr_api + '/api/v1/runjob', json=payload)
+            # Check for status code
+            # If status is not success, log it as an error
             if resp.status_code == 200:
-                logger.info('Successfully invoked EMR API for {eco} ecosystem'.format(
-                    eco=ecosystem))
-                logger.info('%r' % resp.json())
+                logger.info('Successfully invoked EMR API for {eco} ecosystem \n {resp}'.format(
+                    eco=ecosystem, resp=resp.json()))
             else:
-                logger.error('Error received from EMR API for {eco} ecosystem'.format(
-                    eco=ecosystem))
-                logger.error('%r' % resp.json())
+                logger.error('Error received from EMR API for {eco} ecosystem \n {resp}'.format(
+                    eco=ecosystem, resp=resp.json()))
         except Exception:
             logger.error('Failed to invoke EMR API for {eco} ecosystem'.format(eco=ecosystem))
 
@@ -305,8 +306,12 @@ class ReportHelper:
                 logger.info('Storing user-input stacks for ecosystem {eco} at {dir}'.format(
                     eco=eco, dir=bucket_name + obj_key))
                 try:
+                    # Store the training content for each ecosystem
                     self.s3.store_json_content(content=training_data, bucket_name=bucket_name,
                                                obj_key=obj_key)
+                    # Invoke the EMR API to kickstart retraining process
+                    # This EMR invocation happens for all ecosystems almost at the same time.
+                    # TODO - find an alternative if there is a need
                     self.invoke_emr_api(bucket_name, eco, model_version, github_repo)
                 except Exception:
                     continue
