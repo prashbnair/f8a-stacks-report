@@ -252,7 +252,6 @@ class ReportHelper:
         }
         url = self.emr_api + '/api/v1/runjob'
         try:
-
             resp = requests.post(url=url, json=payload)
             if resp.status_code == 200:
                 logger.info('Successfully invoked EMR API for {eco} ecosystem'.format(
@@ -262,7 +261,7 @@ class ReportHelper:
                 logger.error('Error received from EMR API for {eco} ecosystem'.format(
                     eco=ecosystem))
                 logger.error('%r' % resp.json())
-        except:
+        except Exception:
             logger.error('Failed to invoke EMR API for {eco} ecosystem'.format(eco=ecosystem))
 
     def store_training_data(self, result):
@@ -309,7 +308,7 @@ class ReportHelper:
                     self.s3.store_json_content(content=training_data, bucket_name=bucket_name,
                                                obj_key=obj_key)
                     self.invoke_emr_api(bucket_name, eco, model_version, github_repo)
-                except:
+                except Exception:
                     continue
 
     def normalize_worker_data(self, start_date, end_date, stack_data, worker, frequency='daily'):

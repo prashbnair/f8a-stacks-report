@@ -225,6 +225,7 @@ def mock_emr_api(*_args, **_kwargs):
     """Mock the call to the emr api service with status 200."""
     class MockResponse:
         """Mock response object."""
+
         def __init__(self, json_data, status_code):
             """Create a mock json response."""
             self.json_data = json_data
@@ -241,6 +242,7 @@ def mock_emr_api_fail(*_args, **_kwargs):
     """Mock the call to the emr api service with status 400."""
     class MockResponse:
         """Mock response object."""
+
         def __init__(self, json_data, status_code):
             """Create a mock json response."""
             self.json_data = json_data
