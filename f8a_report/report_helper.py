@@ -121,7 +121,7 @@ class ReportHelper:
         self.pypi_training_repo = os.getenv(
             'PYPI_TRAINING_REPO', 'https://github.com/fabric8-analytics/f8a-pypi-insights')
 
-        self.emr_api = os.getenv('EMR_API', 'http://f8a-emr-deployment:6006/')
+        self.emr_api = os.getenv('EMR_API', 'http://f8a-emr-deployment:6006')
 
     def validate_and_process_date(self, some_date):
         """Validate the date format and apply the format YYYY-MM-DDTHH:MI:SSZ."""
@@ -250,8 +250,10 @@ class ReportHelper:
             'ecosystem': ecosystem,
             'data_version': data_version
         }
+        url = self.emr_api + '/api/v1/runjob'
         try:
-            resp = requests.post(url=self.emr_api, json=payload)
+
+            resp = requests.post(url=url, json=payload)
             if resp.status_code == 200:
                 logger.info('Successfully invoked EMR API for {eco} ecosystem'.format(
                     eco=ecosystem))
