@@ -74,6 +74,14 @@ objects:
                   value: ${PYPI_MODEL_BUCKET}
                 - name: GOLANG_MODEL_BUCKET
                   value: ${GOLANG_MODEL_BUCKET}
+                - name: GOLANG_TRAINING_REPO
+                  value: ${GOLANG_TRAINING_REPO}
+                - name: MAVEN_TRAINING_REPO
+                  value: ${MAVEN_TRAINING_REPO}
+                - name: NPM_TRAINING_REPO
+                  value: ${NPM_TRAINING_REPO}
+                - name: PYPI_TRAINING_REPO
+                  value: ${PYPI_TRAINING_REPO}
               resources:
                 requests:
                   memory: ${MEMORY_REQUEST}
@@ -131,26 +139,49 @@ parameters:
   value: "1024Mi"
 
 - description: "NPM Model Bucket to put collated data"
-  displayName: Model Version
+  displayName: NPM Model Version
   required: true
   name: NPM_MODEL_BUCKET
   value: "cvae-insights"
 
 - description: "Maven Model Bucket to put collated data"
-  displayName: Model Version
+  displayName: Maven Model Version
   required: true
   name: MAVEN_MODEL_BUCKET
   value: "hpf-insights"
 
 - description: "Python Model Bucket to put collated data"
-  displayName: Model Version
+  displayName: Python Model Version
   required: true
   name: PYPI_MODEL_BUCKET
   value: "hpf-insights"
 
 - description: "Golang Model Bucket to put collated data"
-  displayName: Model Version
+  displayName: Golang Model Version
   required: true
   name: GOLANG_MODEL_BUCKET
   value: "golang-insights"
 
+- description: "Golang Training Repo to fetch training file"
+  displayName: Golang Training Repo
+  required: true
+  name: GOLANG_TRAINING_REPO
+  value: "https://github.com/fabric8-analytics/f8a-golang-insights"
+
+- description: "NPM Training Repo to fetch training file"
+  displayName: NPM Training Repo
+  required: true
+  name: NPM_TRAINING_REPO
+  value: "https://github.com/fabric8-analytics/fabric8-analytics-npm-insights"
+
+- description: "Python Training Repo to fetch training file"
+  displayName: Python Training Repo
+  required: true
+  name: PYPI_TRAINING_REPO
+  value: "https://github.com/fabric8-analytics/f8a-pypi-insights"
+
+- description: "Maven Training Repo to fetch training file"
+  displayName: Maven Training Repo
+  required: true
+  name: MAVEN_TRAINING_REPO
+  value: "https://github.com/fabric8-analytics/f8a-hpf-insights"

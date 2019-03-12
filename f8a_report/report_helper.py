@@ -3,11 +3,12 @@
 import os
 import json
 import logging
-from datetime import datetime as dt
 import psycopg2
 import psycopg2.extras
 import itertools
 import boto3
+import requests
+from datetime import datetime as dt
 from psycopg2 import sql
 from collections import Counter
 from botocore.exceptions import ClientError
@@ -110,6 +111,17 @@ class ReportHelper:
         self.maven_model_bucket = os.getenv('MAVEN_MODEL_BUCKET', 'hpf-insights')
         self.pypi_model_bucket = os.getenv('PYPI_MODEL_BUCKET', 'hpf-insights')
         self.golang_model_bucket = os.getenv('GOLANG_MODEL_BUCKET', 'golang-insights')
+        self.maven_training_repo = os.getenv(
+            'MAVEN_TRAINING_REPO', 'https://github.com/fabric8-analytics/f8a-hpf-insights')
+        self.npm_training_repo = os.getenv(
+            'NPM_TRAINING_REPO',
+            'https://github.com/fabric8-analytics/fabric8-analytics-npm-insights')
+        self.golang_training_repo = os.getenv(
+            'GOLANG_TRAINING_REPO', 'https://github.com/fabric8-analytics/f8a-golang-insights')
+        self.pypi_training_repo = os.getenv(
+            'PYPI_TRAINING_REPO', 'https://github.com/fabric8-analytics/f8a-pypi-insights')
+
+        self.emr_api = os.getenv('EMR_API', 'http://f8a-emr-deployment:6006')
 
     def validate_and_process_date(self, some_date):
         """Validate the date format and apply the format YYYY-MM-DDTHH:MI:SSZ."""
@@ -230,6 +242,29 @@ class ReportHelper:
 
         return result
 
+    def invoke_emr_api(self, bucket_name, ecosystem, data_version, github_repo):
+        """Invoke EMR Retraining API to start the retraining process."""
+        payload = {
+            'bucket_name': bucket_name,
+            'github_repo': github_repo,
+            'ecosystem': ecosystem,
+            'data_version': data_version
+        }
+
+        try:
+            # Invoke EMR API to run the retraining
+            resp = requests.post(url=self.emr_api + '/api/v1/runjob', json=payload)
+            # Check for status code
+            # If status is not success, log it as an error
+            if resp.status_code == 200:
+                logger.info('Successfully invoked EMR API for {eco} ecosystem \n {resp}'.format(
+                    eco=ecosystem, resp=resp.json()))
+            else:
+                logger.error('Error received from EMR API for {eco} ecosystem \n {resp}'.format(
+                    eco=ecosystem, resp=resp.json()))
+        except Exception:
+            logger.error('Failed to invoke EMR API for {eco} ecosystem'.format(eco=ecosystem))
+
     def store_training_data(self, result):
         """Store Training Data for each ecosystem in their respective buckets."""
         model_version = dt.now().strftime('%Y-%m-%d')
@@ -254,20 +289,32 @@ class ReportHelper:
             # Get the bucket name based on ecosystems to store user-input stacks for retraining
             if eco == 'maven':
                 bucket_name = self.maven_model_bucket
+                github_repo = self.maven_training_repo
             elif eco == 'pypi':
                 bucket_name = self.pypi_model_bucket
+                github_repo = self.pypi_training_repo
             elif eco == 'go':
                 bucket_name = self.golang_model_bucket
+                github_repo = self.golang_training_repo
             elif eco == 'npm':
                 bucket_name = self.npm_model_bucket
+                github_repo = self.npm_training_repo
             else:
                 continue
 
             if bucket_name:
                 logger.info('Storing user-input stacks for ecosystem {eco} at {dir}'.format(
                     eco=eco, dir=bucket_name + obj_key))
-                self.s3.store_json_content(content=training_data, bucket_name=bucket_name,
-                                           obj_key=obj_key)
+                try:
+                    # Store the training content for each ecosystem
+                    self.s3.store_json_content(content=training_data, bucket_name=bucket_name,
+                                               obj_key=obj_key)
+                    # Invoke the EMR API to kickstart retraining process
+                    # This EMR invocation happens for all ecosystems almost at the same time.
+                    # TODO - find an alternative if there is a need
+                    self.invoke_emr_api(bucket_name, eco, model_version, github_repo)
+                except Exception:
+                    continue
 
     def normalize_worker_data(self, start_date, end_date, stack_data, worker, frequency='daily'):
         """Normalize worker data for reporting."""

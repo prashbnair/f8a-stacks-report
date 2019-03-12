@@ -8,6 +8,19 @@ import json
 
 r = ReportHelper()
 s = S3Helper()
+emr_resp = {
+    "ResponseMetadata": {
+        "HTTPStatusCode": 200,
+        "RequestId": "a336ee75-43f7-11e9-ad8b-83aeddb240c6",
+        "RetryAttempts": 0,
+        "HTTPHeaders": {
+            "date": "Mon, 11 Mar 2019 12:17:27 GMT",
+            "content-type": "application/x-amz-json-1.1", "content-length": "30",
+            "x-amzn-requestid": "a336ee75-43f7-11e9-ad8b-83aeddb240c6"
+        }
+    },
+    "JobFlowId": "j-LF2OPMVXAPQD"
+}
 
 with open('tests/data/collateddata.json', 'r') as f:
     collateddata = json.load(f)
@@ -206,6 +219,56 @@ def test_collate_raw_data(_mock1, _mock2):
     result = r.collate_raw_data(collateddata, 'weekly')
 
     assert result is not None
+
+
+def mock_emr_api(*_args, **_kwargs):
+    """Mock the call to the emr api service with status 200."""
+    class MockResponse:
+        """Mock response object."""
+
+        def __init__(self, json_data, status_code):
+            """Create a mock json response."""
+            self.json_data = json_data
+            self.status_code = status_code
+
+        def json(self):
+            """Return JSON data."""
+            return self.json_data
+
+    return MockResponse(emr_resp, 200)
+
+
+def mock_emr_api_fail(*_args, **_kwargs):
+    """Mock the call to the emr api service with status 400."""
+    class MockResponse:
+        """Mock response object."""
+
+        def __init__(self, json_data, status_code):
+            """Create a mock json response."""
+            self.json_data = json_data
+            self.status_code = status_code
+
+        def json(self):
+            """Return JSON data."""
+            return self.json_data
+
+    return MockResponse({}, 400)
+
+
+@mock.patch('requests.post', side_effect=mock_emr_api)
+def test_invoke_emr_api_success(_mock):
+    """Test invoke emr api function with status 200."""
+    result = r.invoke_emr_api('test-bucket', 'maven', '2019-01-03', 'http://github.com/test/test')
+
+    assert result is None
+
+
+@mock.patch('requests.post', side_effect=mock_emr_api_fail)
+def test_invoke_emr_api_failure(_mock):
+    """Test invoke emr api with status 400."""
+    result = r.invoke_emr_api('test-bucket', 'maven', '2019-01-03', 'http://github.com/test/test')
+
+    assert result is None
 
 
 @mock.patch('f8a_report.report_helper.S3Helper.store_json_content', return_value=True)
