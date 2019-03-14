@@ -139,19 +139,11 @@ class ReportHelper:
         except ValueError:
             raise ValueError("Invalid date format")
 
-        # Avoiding SQL injection
-        if start_date == end_date:
-            query = sql.SQL('SELECT {} FROM {} WHERE {} = \'%s\'').format(
-                sql.Identifier('id'), sql.Identifier('stack_analyses_request'),
-                sql.Identifier('submitTime')
-            )
-            self.cursor.execute(query.as_string(self.conn) % start_date)
-        else:
-            query = sql.SQL('SELECT {} FROM {} WHERE {} BETWEEN \'%s\' AND \'%s\'').format(
-                sql.Identifier('id'), sql.Identifier('stack_analyses_request'),
-                sql.Identifier('submitTime')
-            )
-            self.cursor.execute(query.as_string(self.conn) % (start_date, end_date))
+        query = sql.SQL('SELECT {} FROM {} WHERE {} BETWEEN \'%s\' AND \'%s\'').format(
+            sql.Identifier('id'), sql.Identifier('stack_analyses_request'),
+            sql.Identifier('submitTime')
+        )
+        self.cursor.execute(query.as_string(self.conn) % (start_date, end_date))
 
         rows = self.cursor.fetchall()
 
