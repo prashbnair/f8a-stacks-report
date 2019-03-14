@@ -1,7 +1,8 @@
 """Test module for classes and functions found in the report_generator module."""
 
 from f8a_report.graph_report_generator import execute_gremlin_dsl, \
-    generate_report_for_unknown_epvs, generate_report_for_latest_version
+    generate_report_for_unknown_epvs, generate_report_for_latest_version, \
+    generate_report_for_cves
 from unittest import mock
 
 
@@ -44,6 +45,48 @@ def mock_response1():
     return x
 
 
+def mock_response2():
+    """Generate data for mock2 response."""
+    x = {
+        "result": {
+            "data": [
+                {
+                    "a": {
+                        "cve_id": [
+                            "CVE-2013-4310"
+                        ]
+                    },
+                    "b": {
+                        "pname": [
+                            "org.apache.struts:struts2-core"
+                        ],
+                        "version": [
+                            "2.0.5"
+                        ]
+                    }
+                },
+                {
+                    "a": {
+                        "cve_id": [
+                            "CVE-2013-4310"
+                        ]
+                    },
+                    "b": {
+                        "pname": [
+                            "org.apache.struts:struts2-core"
+                        ],
+                        "version": [
+                            "2.0.7"
+                        ]
+                    }
+                }
+            ]
+        }
+
+    }
+    return x
+
+
 @mock.patch("f8a_report.graph_report_generator.execute_gremlin_dsl")
 def test_generate_report_for_unknown_epvs(mocker):
     """Test generate_report_for_unknown_epvs function."""
@@ -59,13 +102,13 @@ def test_generate_report_for_unknown_epvs(mocker):
                     "version": "2.40.1"
                 }]
     out = generate_report_for_unknown_epvs(epv_list)
-    assert out['maven:io.vertx:vertx-web:3.6.3'] == "true"
-    assert out['npm:lodash:2.40.1'] == "false"
+    assert out['maven@io.vertx:vertx-web@3.6.3'] == "true"
+    assert out['npm@lodash@2.40.1'] == "false"
 
 
 @mock.patch("f8a_report.graph_report_generator.execute_gremlin_dsl")
 def test_generate_report_for_latest_version(mocker):
-    """Test read_packages function."""
+    """Test generate_report_for_latest_version function."""
     mocker.return_value = mock_response1()
     epv_list = [{
                     "ecosystem": "maven",
@@ -76,10 +119,31 @@ def test_generate_report_for_latest_version(mocker):
                     "name": "lodash"
                 }]
     out = generate_report_for_latest_version(epv_list)
-    assert out['maven:io.vertx:vertx-web']['known_latest_version'] == "3.6.3"
-    assert out['npm:lodash']['known_latest_version'] == "2.39.2"
-    assert out['maven:io.vertx:vertx-web']['actual_latest_version'] is not None
-    assert out['npm:lodash']['actual_latest_version'] is not None
+    assert out['maven@io.vertx:vertx-web']['known_latest_version'] == "3.6.3"
+    assert out['npm@lodash']['known_latest_version'] == "2.39.2"
+    assert out['maven@io.vertx:vertx-web']['actual_latest_version'] is not None
+    assert out['npm@lodash']['actual_latest_version'] is not None
+
+
+@mock.patch("f8a_report.graph_report_generator.execute_gremlin_dsl")
+def test_generate_report_for_cves(mocker):
+    """Test generate_report_for_cves function."""
+    mocker.return_value = mock_response2()
+    cve_data = {
+        "CVE-2013-4310": {
+            "ecosystem": "maven",
+            "packages": [
+                {
+                    "name": "org.apache.struts:struts2-core",
+                    "versions": ["2.0.5", "2.0.6"]
+                }
+            ]
+        }
+    }
+    out = generate_report_for_cves(cve_data)
+    assert out['CVE-2013-4310@org.apache.struts:struts2-core@2.0.5'] == "Found"
+    assert out['CVE-2013-4310@org.apache.struts:struts2-core@2.0.6'] == "Not Found"
+    assert out['CVE-2013-4310@org.apache.struts:struts2-core@2.0.7'] == "False Positive"
 
 
 @mock.patch('requests.Session.post', side_effect="")

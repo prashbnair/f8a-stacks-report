@@ -9,28 +9,49 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
 _logger = logging.getLogger(__name__)
-GREMLIN_SERVER_URL_REST = "http://gremlin-yzainee-fabric8-analytics.devtools-dev.ext.devshift.net"
-"""
+
 GREMLIN_SERVER_URL_REST = "http://{host}:{port}".format(
     host=os.environ.get("BAYESIAN_GREMLIN_HTTP_SERVICE_HOST", "localhost"),
-    port=os.environ.get("BAYESIAN_GREMLIN_HTTP_SERVICE_PORT", "8182")) """
+    port=os.environ.get("BAYESIAN_GREMLIN_HTTP_SERVICE_PORT", "8182"))
 
 GREMLIN_QUERY_SIZE = os.getenv('GREMLIN_QUERY_SIZE', 50)
 
-"""
-TODO: WIP
-def generate_report_for_cves(cve_list):
-    Generate a report for CVEs.
 
-    :param cve_list: list, list of CVEs
+def generate_report_for_cves(cve_data):
+    """Generate a report for CVEs.
+
+    :param cve_data: list, list of CVEs
     :return json, list of cve information
-
-    query_str = "g.V().has('pecosystem', '{arg0}')." \
-                "has('pname', '{arg1}').has('version', '{arg2}')" \
-                ".valueMap().dedup().fill(epv);"
+    """
+    query_str = "g.V().has('cecosystem', '{arg0}')." \
+                "has('cve_id', '{arg1}').as('a').in('has_cve').as('b')." \
+                "select('a','b').by(valueMap('cve_id', 'pname', 'version'))." \
+                "dedup().fill(epv);"
     report_result = {}
     args = []
-"""
+    for k, v in cve_data.items():
+        eco = v['ecosystem']
+        args.append({
+            "0": eco,
+            "1": k
+        })
+        for pkg in v['packages']:
+            name = pkg['name']
+            for ver in pkg['versions']:
+                key = k + "@" + name + "@" + ver
+                report_result[key] = "Not Found"
+    result_data = batch_query_executor(query_str, args)
+    if result_data is not None:
+        for res in result_data:
+            id = res['a']['cve_id'][0]
+            pkg = res['b']['pname'][0]
+            ver = res['b']['version'][0]
+            key = id + "@" + pkg + "@" + ver
+            if key in report_result:
+                report_result[key] = "Found"
+            else:
+                report_result[key] = "False Positive"
+    return report_result
 
 
 def generate_report_for_unknown_epvs(epv_list):
@@ -53,7 +74,7 @@ def generate_report_for_unknown_epvs(epv_list):
             "1": pkg,
             "2": ver
         })
-        report_result[eco + ":" + pkg + ":" + ver] = "false"
+        report_result[eco + "@" + pkg + "@" + ver] = "false"
 
     result_data = batch_query_executor(query_str, args)
     if result_data is not None:
@@ -61,7 +82,7 @@ def generate_report_for_unknown_epvs(epv_list):
             eco = res['pecosystem'][0]
             pkg = res['pname'][0]
             ver = res['version'][0]
-            report_result[eco + ":" + pkg + ":" + ver] = "true"
+            report_result[eco + "@" + pkg + "@" + ver] = "true"
     return report_result
 
 
@@ -95,7 +116,7 @@ def generate_report_for_latest_version(epv_list):
                 "known_latest_version": latest_pkg_version,
                 "actual_latest_version": latest
             }
-            report_result[eco + ":" + pkg] = tmp
+            report_result[eco + "@" + pkg] = tmp
 
     return report_result
 
@@ -173,49 +194,3 @@ def batch_query_executor(query_string, args):
                           "Expected response, got None...Query->", query)
 
     return result_data
-
-
-"""
-if __name__ == "__main__":
-    print("start")
-    list = [{
-            "ecosystem": "maven",
-            "name": "io.vertx:vertx-web"
-            },
-            {
-                "ecosystem": "npm",
-                "name": "lodash"
-            },
-            {
-                "ecosystem": "maven",
-                "name": "io.vertx:lang-groovy"
-            },
-            {
-                "ecosystem": "pypi",
-                "name": "requests"
-            }]
-    generate_report_for_latest_version(list)
-
-    list = [{
-                "ecosystem": "maven",
-                "name": "io.vertx:vertx-web",
-                "version": "3.6.3"
-            },
-            {
-                "ecosystem": "npm",
-                "name": "lodash",
-                "version": "2.40.1"
-            },
-            {
-                "ecosystem": "maven",
-                "name": "io.vertx:lang-groovy",
-                "version": "2.1.1-final"
-            },
-            {
-                "ecosystem": "pypi",
-                "name": "requests",
-                "version": "2.21.0"
-            }]
-    generate_report_for_unknown_epvs(list)
-    print("end")
-"""
