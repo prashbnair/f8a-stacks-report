@@ -22,7 +22,7 @@ def main():
     today = dt.today()
 
     start_date = (today - timedelta(days=1)).strftime('%Y-%m-%d')
-    end_date = (today - timedelta(days=1)).strftime('%Y-%m-%d')
+    end_date = today.strftime('%Y-%m-%d')
     daily_response, ingestion_results = r.get_report(start_date, end_date, 'daily')
     logger.debug('Daily report data from {s} to {e}'.format(s=start_date, e=end_date))
     logger.debug(json.dumps(daily_response, indent=2))
