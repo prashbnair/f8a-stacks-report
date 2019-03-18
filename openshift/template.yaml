@@ -27,6 +27,10 @@ objects:
             - name: f8a-stacks-report
               image: "${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${IMAGE_TAG}"
               env:
+                - name: BAYESIAN_GREMLIN_HTTP_SERVICE_HOST
+                  value: bayesian-gremlin-http
+                - name: BAYESIAN_GREMLIN_HTTP_SERVICE_PORT
+                  value: "8182"
                 - name: AWS_S3_SECRET_ACCESS_KEY
                   valueFrom:
                     secretKeyRef:
@@ -83,7 +87,7 @@ objects:
                 - name: PYPI_TRAINING_REPO
                   value: ${PYPI_TRAINING_REPO}
                 - name: GREMLIN_QUERY_SIZE
-                  value: ${GREMLIN_QUERY_SIZE}
+                  value: "50"
               resources:
                 requests:
                   memory: ${MEMORY_REQUEST}
