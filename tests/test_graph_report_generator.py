@@ -117,6 +117,10 @@ def test_generate_report_for_latest_version(mocker):
                 {
                     "ecosystem": "npm",
                     "name": "lodash"
+                },
+                {
+                    "ecosystem": "npm",
+                    "name": "test-hooks"
                 }]
     out = generate_report_for_latest_version(epv_list)
     assert out['maven@io.vertx:vertx-web']['known_latest_version'] == "3.6.3"

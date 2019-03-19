@@ -98,10 +98,20 @@ def generate_report_for_latest_version(epv_list):
     report_result = {}
     args = []
     for epv in epv_list:
+        eco = epv['ecosystem']
+        pkg = epv['name']
         args.append({
-            "0": epv['ecosystem'],
-            "1": epv['name']
+            "0": eco,
+            "1": pkg
         })
+        latest = get_latest_versions_for_ep(eco, pkg)
+        tmp = {
+            "ecosystem": eco,
+            "name": pkg,
+            "known_latest_version": "",
+            "actual_latest_version": latest
+        }
+        report_result[eco + "@" + pkg] = tmp
 
     result_data = batch_query_executor(query_str, args)
     if result_data is not None:
@@ -109,14 +119,7 @@ def generate_report_for_latest_version(epv_list):
             eco = res['ecosystem'][0]
             pkg = res['name'][0]
             latest_pkg_version = res['latest_version'][0]
-            latest = get_latest_versions_for_ep(eco, pkg)
-            tmp = {
-                "ecosystem": eco,
-                "name": pkg,
-                "known_latest_version": latest_pkg_version,
-                "actual_latest_version": latest
-            }
-            report_result[eco + "@" + pkg] = tmp
+            report_result[eco + "@" + pkg]['known_latest_version'] = latest_pkg_version
 
     return report_result
 
