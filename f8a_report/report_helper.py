@@ -12,6 +12,8 @@ from datetime import datetime as dt
 from psycopg2 import sql
 from collections import Counter
 from botocore.exceptions import ClientError
+from graph_report_generator import generate_report_for_unknown_epvs,\
+    generate_report_for_latest_version
 
 logger = logging.getLogger(__file__)
 
@@ -497,17 +499,6 @@ class ReportHelper:
     def retrieve_ingestion_results(self, start_date, end_date, frequency='daily'):
         """Retrieve results for selected worker from RDB."""
         result = {}
-        # No of EPV ingested in a given day
-        query = sql.SQL('SELECT EC.NAME, PK.NAME, VR.IDENTIFIER FROM ANALYSES AN,'
-                        ' PACKAGES PK, VERSIONS VR, ECOSYSTEMS EC WHERE'
-                        ' AN.STARTED_AT >= \'%s\' AND AN.STARTED_AT < \'%s\''
-                        ' AND AN.VERSION_ID = VR.ID AND VR.PACKAGE_ID = PK.ID'
-                        ' AND PK.ECOSYSTEM_ID = EC.ID')
-
-        self.cursor.execute(query.as_string(self.conn) % (start_date, end_date))
-        data = json.dumps(self.cursor.fetchall())
-
-        result['EPV_INGESTION_DATA'] = data
 
         # No of EPV failed ingesting into graph
 
@@ -521,6 +512,13 @@ class ReportHelper:
         data = json.dumps(self.cursor.fetchall())
 
         result['EPV_GRAPH_FAILED_DATA'] = data
+
+        # No of EPV successfully ingesting into graph
+
+        self.cursor.execute(query.as_string(self.conn) % (start_date, end_date, 'TRUE'))
+        data = json.dumps(self.cursor.fetchall())
+
+        result['EPV_GRAPH_SUCCESS_DATA'] = data
 
         self.normalize_ingestion_data(start_date, end_date, result, frequency)
         return result
@@ -540,66 +538,75 @@ class ReportHelper:
                 'generated_on': dt.now().isoformat('T')
             },
             'ingestion_summary': {},
-            'ingestion_details': []
+            'ingestion_details_v2': {}
         }
 
         all_deps_count = {'all': 0, 'npm': 0, 'maven': 0, 'python': 0}
         failed_deps_count = {'all': 0, 'npm': 0, 'maven': 0, 'python': 0}
-        all_epv_list = {'npm': [], 'maven': [], 'python': []}
-        failed_epv_list = {'npm': [], 'maven': [], 'python': []}
+        all_epv_list_v2 = {'npm': {}, 'maven': {}, 'python': {}}
 
-        # marshalling the total ingested epv data according to the ecosystems
-        epv_data = ingestion_data['EPV_INGESTION_DATA']
-        epv_data = json.loads(epv_data)
-        for data in epv_data:
+        # Graph Availability validation
+        success_epv_data = ingestion_data['EPV_GRAPH_SUCCESS_DATA']
+        success_epv_data = json.loads(success_epv_data)
+        graph_input = []
+        for data in success_epv_data:
             all_deps_count['all'] = all_deps_count['all'] + 1
-            if data[0] == 'maven':
-                all_deps_count['maven'] = all_deps_count['maven'] + 1
-                all_epv_list['maven'].append(data[1] + '::' + data[2])
-            elif data[0] == 'npm':
-                all_deps_count['npm'] = all_deps_count['npm'] + 1
-                all_epv_list['npm'].append(data[1] + '::' + data[2])
-            elif data[0] == 'python':
-                all_deps_count['python'] = all_deps_count['python'] + 1
-                all_epv_list['python'].append(data[1] + '::' + data[2])
-            else:
-                continue
+            all_deps_count[data[0]] = all_deps_count[data[0]] + 1
+            graph_template = {
+                'ecosystem': data[0],
+                'name': data[1],
+                'version': data[2]
+            }
+            graph_input.append(graph_template)
 
-        # marshalling the total failed epv data ingested according to the ecosystems
+        graph_output = generate_report_for_unknown_epvs(graph_input)
+        for attributes, values in graph_output.items():
+            versn_template = {}
+            epv_arr = attributes.split('@')
+            all_epv_list_v2[epv_arr[0]][epv_arr[1]] = {}
+            all_epv_list_v2[epv_arr[0]][epv_arr[1]]['package_known'] = values
+            all_epv_list_v2[epv_arr[0]][epv_arr[1]]['versions'] = []
+            versn_template['version'] = epv_arr[2]
+            versn_template['ingested_in_graph'] = values
+            if values == 'false':
+                failed_deps_count['all'] = failed_deps_count['all'] + 1
+                failed_deps_count[epv_arr[0]] = failed_deps_count[epv_arr[0]] + 1
+            all_epv_list_v2[epv_arr[0]][epv_arr[1]]['versions'].append(versn_template)
+
+        logger.error(graph_input)
+
         failed_epv_data = ingestion_data['EPV_GRAPH_FAILED_DATA']
         failed_epv_data = json.loads(failed_epv_data)
         for data in failed_epv_data:
+            versn_template = {}
+            all_deps_count['all'] = all_deps_count['all'] + 1
+            all_deps_count[data[0]] = all_deps_count[data[0]] + 1
             failed_deps_count['all'] = failed_deps_count['all'] + 1
-            if data[0] == 'maven':
-                failed_deps_count['maven'] = failed_deps_count['maven'] + 1
-                failed_epv_list['maven'].append(data[1] + '::' + data[2])
-            elif data[0] == 'npm':
-                failed_deps_count['npm'] = failed_deps_count['npm'] + 1
-                failed_epv_list['npm'].append(data[1] + '::' + data[2])
-            elif data[0] == 'python':
-                failed_deps_count['python'] = failed_deps_count['python'] + 1
-                failed_epv_list['python'].append(data[1] + '::' + data[2])
-            else:
-                continue
-
-        # creating the epv ingestion details info according to the ecosystems
-        for epv_data in all_epv_list:
-            ingestion_info_template = {
-                'ecosystem': '',
-                'ingested_epvs': [],
-                'failed_epvs': []
+            failed_deps_count[data[0]] = failed_deps_count[data[0]] + 1
+            all_epv_list_v2[data[0]][data[1]] = {}
+            all_epv_list_v2[data[0]][data[1]]['versions'] = []
+            versn_template['version'] = data[2]
+            versn_template['ingested_in_graph'] = 'false'
+            all_epv_list_v2[data[0]][data[1]]['versions'].append(versn_template)
+            graph_template = {
+                'ecosystem': data[0],
+                'name': data[1],
+                'version': data[2]
             }
-            ingestion_info_template['ecosystem'] = epv_data
-            ingestion_info_template['ingested_epvs'].append(all_epv_list[epv_data])
-            template['ingestion_details'].append(ingestion_info_template)
+            graph_input.append(graph_template)
 
-        for data in template['ingestion_details']:
-            if data['ecosystem'] == 'maven':
-                data['failed_epvs'] = failed_epv_list['maven']
-            elif data['ecosystem'] == 'npm':
-                data['failed_epvs'] = failed_epv_list['npm']
-            elif data['ecosystem'] == 'python':
-                data['failed_epvs'] = failed_epv_list['python']
+        graph_output = generate_report_for_latest_version(graph_input)
+        logger.error(graph_output)
+        for attributes, values in graph_output.items():
+            epv_arr = attributes.split('@')
+            all_epv_list_v2[epv_arr[0]][epv_arr[1]]['known_latest_version'] = \
+                values['known_latest_version']
+            all_epv_list_v2[epv_arr[0]][epv_arr[1]]['actual_latest_version'] = \
+                values['actual_latest_version']
+            if values['known_latest_version'] == '':
+                all_epv_list_v2[epv_arr[0]][epv_arr[1]]['package_known'] = 'false'
+
+        template['ingestion_details_v2'] = all_epv_list_v2
 
         # creating the epv ingestion statistics info according to the ecosystems
         template['ingestion_summary'] = {
@@ -629,7 +636,7 @@ class ReportHelper:
 
         # Saving the final report in the relevant S3 bucket
         try:
-            obj_key = '{depl_prefix}/{type}/{report_name}.json'.format(
+            obj_key = '{depl_prefix}/{type}/epv/{report_name}.json'.format(
                 depl_prefix=self.s3.deployment_prefix, type=report_type, report_name=report_name
             )
             self.s3.store_json_content(content=template, obj_key=obj_key,
@@ -644,9 +651,11 @@ class ReportHelper:
         ingestion_results = False
         if frequency == 'daily':
             result = self.retrieve_ingestion_results(start_date, end_date)
-            epv_data = result['EPV_INGESTION_DATA']
-            epv_data = json.loads(epv_data)
-            if len(epv_data) > 0:
+            epv_failed_data = result['EPV_GRAPH_FAILED_DATA']
+            epv_failed_data = json.loads(epv_failed_data)
+            epv_success_data = result['EPV_GRAPH_SUCCESS_DATA']
+            epv_success_data = json.loads(epv_success_data)
+            if len(epv_success_data) > 0 or len(epv_failed_data) > 0:
                 ingestion_results = True
             else:
                 ingestion_results = False
