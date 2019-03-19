@@ -14,6 +14,7 @@ NORMAL=$(tput sgr0)
 RED=$(tput bold && tput setaf 1)
 GREEN=$(tput bold && tput setaf 2)
 YELLOW=$(tput bold && tput setaf 3)
+F8A_UTIL_VERSION=d7aaccf
 
 printf "%sShutting down docker-compose ..." "${NORMAL}"
 gc() {
@@ -66,6 +67,8 @@ export AWS_S3_REGION="not-set"
 prepare_venv
 pip3 install -r requirements.txt
 pip3 install -r tests/requirements.txt
+pip3 install git+https://github.com/fabric8-analytics/fabric8-analytics-utils.git@${F8A_UTIL_VERSION}
+pip3 install git+https://git@github.com/fabric8-analytics/fabric8-analytics-version-comparator.git#egg=f8a_version_comparator
 pip3 install "$(pwd)/."
 
 python3 "$(which pytest)" --cov=f8a_report/ --cov-report term-missing --cov-fail-under=$COVERAGE_THRESHOLD -vv tests
