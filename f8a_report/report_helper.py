@@ -541,9 +541,9 @@ class ReportHelper:
             'ingestion_details_v2': {}
         }
 
-        all_deps_count = {'all': 0, 'npm': 0, 'maven': 0, 'python': 0}
-        failed_deps_count = {'all': 0, 'npm': 0, 'maven': 0, 'python': 0}
-        all_epv_list_v2 = {'npm': {}, 'maven': {}, 'python': {}}
+        all_deps_count = {'all': 0}
+        failed_deps_count = {'all': 0}
+        all_epv_list_v2 = {}
 
         # Graph Availability validation
         success_epv_data = ingestion_data['EPV_GRAPH_SUCCESS_DATA']
@@ -551,6 +551,8 @@ class ReportHelper:
         graph_input = []
         for data in success_epv_data:
             all_deps_count['all'] = all_deps_count['all'] + 1
+            if all_deps_count.get(data[0]) is None:
+                all_deps_count[data[0]] = 0
             all_deps_count[data[0]] = all_deps_count[data[0]] + 1
             graph_template = {
                 'ecosystem': data[0],
@@ -563,6 +565,8 @@ class ReportHelper:
         for attributes, values in graph_output.items():
             versn_template = {}
             epv_arr = attributes.split('@')
+            if all_epv_list_v2.get(epv_arr[0]) is None:
+                all_epv_list_v2[epv_arr[0]] = {}
             all_epv_list_v2[epv_arr[0]][epv_arr[1]] = {}
             all_epv_list_v2[epv_arr[0]][epv_arr[1]]['package_known'] = values
             all_epv_list_v2[epv_arr[0]][epv_arr[1]]['versions'] = []
@@ -570,19 +574,25 @@ class ReportHelper:
             versn_template['ingested_in_graph'] = values
             if values == 'false':
                 failed_deps_count['all'] = failed_deps_count['all'] + 1
+                if failed_deps_count.get(epv_arr[0]) is None:
+                    failed_deps_count[epv_arr[0]] = 0
                 failed_deps_count[epv_arr[0]] = failed_deps_count[epv_arr[0]] + 1
             all_epv_list_v2[epv_arr[0]][epv_arr[1]]['versions'].append(versn_template)
-
-        logger.error(graph_input)
 
         failed_epv_data = ingestion_data['EPV_GRAPH_FAILED_DATA']
         failed_epv_data = json.loads(failed_epv_data)
         for data in failed_epv_data:
             versn_template = {}
             all_deps_count['all'] = all_deps_count['all'] + 1
+            if all_deps_count.get(data[0]) is None:
+                all_deps_count[data[0]] = 0
             all_deps_count[data[0]] = all_deps_count[data[0]] + 1
             failed_deps_count['all'] = failed_deps_count['all'] + 1
+            if failed_deps_count.get(data[0]) is None:
+                failed_deps_count[data[0]] = 0
             failed_deps_count[data[0]] = failed_deps_count[data[0]] + 1
+            if all_epv_list_v2.get(data[0]) is None:
+                all_epv_list_v2[data[0]] = {}
             all_epv_list_v2[data[0]][data[1]] = {}
             all_epv_list_v2[data[0]][data[1]]['versions'] = []
             versn_template['version'] = data[2]
@@ -596,9 +606,10 @@ class ReportHelper:
             graph_input.append(graph_template)
 
         graph_output = generate_report_for_latest_version(graph_input)
-        logger.error(graph_output)
         for attributes, values in graph_output.items():
             epv_arr = attributes.split('@')
+            if all_epv_list_v2.get(epv_arr[0]) is None:
+                all_epv_list_v2[epv_arr[0]] = {}
             all_epv_list_v2[epv_arr[0]][epv_arr[1]]['known_latest_version'] = \
                 values['known_latest_version']
             all_epv_list_v2[epv_arr[0]][epv_arr[1]]['actual_latest_version'] = \
@@ -609,30 +620,17 @@ class ReportHelper:
         template['ingestion_details_v2'] = all_epv_list_v2
 
         # creating the epv ingestion statistics info according to the ecosystems
-        template['ingestion_summary'] = {
-            'total_epv_ingestion_count': all_deps_count['all'],
-            'npm': {
-                'epv_ingestion_count': all_deps_count['npm'],
+        template['ingestion_summary']['total_epv_ingestion_count'] = all_deps_count['all']
+        for data in all_deps_count:
+            if failed_deps_count.get(data) is None:
+                failed_deps_count[data] = 0
+            stats_template = {
+                'epv_ingestion_count': all_deps_count[data],
                 'epv_successfully_ingested_count':
-                    all_deps_count['npm'] - failed_deps_count['npm'],
-                'failed_epv_ingestion_count': failed_deps_count['npm'],
-                'unknown_ingestion_triggered': True
-            },
-            'maven': {
-                'epv_ingestion_count': all_deps_count['maven'],
-                'epv_successfully_ingested_count':
-                    all_deps_count['maven'] - failed_deps_count['maven'],
-                'failed_epv_ingestion_count': failed_deps_count['maven'],
-                'unknown_ingestion_triggered': True
-            },
-            'python': {
-                'epv_ingestion_count': all_deps_count['python'],
-                'epv_successfully_ingested_count':
-                    all_deps_count['python'] - failed_deps_count['python'],
-                'failed_epv_ingestion_count': failed_deps_count['python'],
-                'unknown_ingestion_triggered': True
+                    all_deps_count[data] - failed_deps_count[data],
+                'failed_epv_ingestion_count': failed_deps_count[data]
             }
-        }
+            template['ingestion_summary'][data] = stats_template
 
         # Saving the final report in the relevant S3 bucket
         try:
