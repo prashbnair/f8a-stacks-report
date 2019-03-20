@@ -545,7 +545,7 @@ class ReportHelper:
         failed_deps_count = {'all': 0}
         all_epv_list_v2 = {}
 
-        # Graph Availability validation
+        # Graph Availability validation starts
         success_epv_data = ingestion_data['EPV_GRAPH_SUCCESS_DATA']
         success_epv_data = json.loads(success_epv_data)
         graph_input = []
@@ -561,6 +561,7 @@ class ReportHelper:
             }
             graph_input.append(graph_template)
 
+        # The below graph call determines the eistence of ingested epvs in the graph
         graph_output = generate_report_for_unknown_epvs(graph_input)
         for attributes, values in graph_output.items():
             versn_template = {}
@@ -605,6 +606,8 @@ class ReportHelper:
             }
             graph_input.append(graph_template)
 
+        # The below graph call determines the latest version information for
+        # ingested epvs in the graph
         graph_output = generate_report_for_latest_version(graph_input)
         for attributes, values in graph_output.items():
             epv_arr = attributes.split('@')
