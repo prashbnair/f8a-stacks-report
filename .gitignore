@@ -13,3 +13,5 @@ metastore_db/
 .coverage
 .pytest_cache/
 html/
+
+.DS_Store
