@@ -14,7 +14,7 @@ GREMLIN_SERVER_URL_REST = "http://{host}:{port}".format(
     host=os.environ.get("BAYESIAN_GREMLIN_HTTP_SERVICE_HOST", "localhost"),
     port=os.environ.get("BAYESIAN_GREMLIN_HTTP_SERVICE_PORT", "8182"))
 
-GREMLIN_QUERY_SIZE = os.getenv('GREMLIN_QUERY_SIZE', 50)
+GREMLIN_QUERY_SIZE = int(os.getenv('GREMLIN_QUERY_SIZE', 50))
 
 
 def generate_report_for_cves(cve_data):
