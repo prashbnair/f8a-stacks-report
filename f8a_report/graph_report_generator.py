@@ -43,14 +43,9 @@ def generate_report_for_cves(cve_data):
     result_data = batch_query_executor(query_str, args)
     if result_data is not None:
         for res in result_data:
-            id = ""
-            pkg = ""
-            ver = ""
-            if 'a' in res:
-                id = get_value(res['a'], 'cve_id')
-            if 'b' in res:
-                pkg = get_value(res['b'], 'pname')
-                ver = get_value(res['b'], 'version')
+            id = get_value(res['a'], 'cve_id') if 'a' in res else ""
+            pkg = get_value(res['b'], 'pname') if 'b' in res else ""
+            ver = get_value(res['b'], 'version') if 'b' in res else ""
             key = id + "@" + pkg + "@" + ver
             if key in report_result:
                 report_result[key] = "Found"
