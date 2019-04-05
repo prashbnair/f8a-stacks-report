@@ -43,9 +43,14 @@ def generate_report_for_cves(cve_data):
     result_data = batch_query_executor(query_str, args)
     if result_data is not None:
         for res in result_data:
-            id = res['a']['cve_id'][0]
-            pkg = res['b']['pname'][0]
-            ver = res['b']['version'][0]
+            id = ""
+            pkg = ""
+            ver = ""
+            if 'a' in res:
+                id = get_value(res['a'], 'cve_id')
+            if 'b' in res:
+                pkg = get_value(res['b'], 'pname')
+                ver = get_value(res['b'], 'version')
             key = id + "@" + pkg + "@" + ver
             if key in report_result:
                 report_result[key] = "Found"
@@ -79,9 +84,9 @@ def generate_report_for_unknown_epvs(epv_list):
     result_data = batch_query_executor(query_str, args)
     if result_data is not None:
         for res in result_data:
-            eco = res['pecosystem'][0]
-            pkg = res['pname'][0]
-            ver = res['version'][0]
+            eco = get_value(res, 'pecosystem')
+            pkg = get_value(res, 'pname')
+            ver = get_value(res, 'version')
             report_result[eco + "@" + pkg + "@" + ver] = "true"
     return report_result
 
@@ -116,9 +121,9 @@ def generate_report_for_latest_version(epv_list):
     result_data = batch_query_executor(query_str, args)
     if result_data is not None:
         for res in result_data:
-            eco = res['ecosystem'][0]
-            pkg = res['name'][0]
-            latest_pkg_version = res['latest_version'][0]
+            eco = get_value(res, 'ecosystem')
+            pkg = get_value(res, 'name')
+            latest_pkg_version = get_value(res, 'latest_version')
             report_result[eco + "@" + pkg]['known_latest_version'] = latest_pkg_version
 
     return report_result
@@ -158,6 +163,13 @@ def get_response_data(json_response, data_default):
     Data default parameters takes what should data to be returned.
     """
     return json_response.get("result", {}).get("data", data_default)
+
+
+def get_value(json, attr):
+    """Get the value from the json."""
+    if attr in json:
+        return json[attr][0]
+    return ""
 
 
 def batch_query_executor(query_string, args):
