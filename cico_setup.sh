@@ -33,7 +33,7 @@ prep() {
     yum -y install epel-release
     yum -y install git which python34-pip python34-virtualenv docker
     systemctl start docker
-    pip3 install docker-compose
+    pip3.4 install docker-compose
 }
 
 build_image() {
