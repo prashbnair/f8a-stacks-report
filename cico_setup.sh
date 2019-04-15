@@ -31,9 +31,9 @@ docker_login() {
 prep() {
     yum -y update
     yum -y install epel-release
-    yum -y install git which python34-pip python34-virtualenv docker
+    yum -y install git which python36-pip python36-virtualenv gcc openssl-devel docker
     systemctl start docker
-    pip3.4 install docker-compose
+    pip3 install docker-compose
 }
 
 build_image() {
