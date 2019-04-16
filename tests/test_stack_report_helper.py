@@ -280,6 +280,14 @@ def test_normalize_worker_data(_mock1, _mock2, _mock3):
                                    stackdata, 'stack_aggregator_v2', 'weekly')
 
     assert resp is not None
+    # Test whether summary for two stacks are reported
+    assert resp['stacks_summary']['total_stack_requests_count'] == 2
+
+    # Test whether summary of a CVE is reported
+    assert resp['stacks_summary']['unique_cves']['CVE-2014-6393:4.3'] == 2
+
+    # Test whether unknown licenses are reported
+    assert resp['stacks_summary']['unique_unknown_licenses_with_frequency']['mpl-2.0'] == 2
 
 
 @mock.patch('f8a_report.report_helper.S3Helper.store_json_content', return_value=True)

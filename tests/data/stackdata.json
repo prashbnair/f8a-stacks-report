@@ -25,7 +25,10 @@
 					"status": "Successful",
 					"outlier_packages": [],
 					"unknown_licenses": {
-						"really_unknown": [],
+						"really_unknown": [{
+							"license": "mpl-2.0",
+							"package": "@renovatebot/docker-registry-client"
+						}],
 						"component_conflict": []
 					},
 					"conflict_packages": [],
@@ -124,7 +127,14 @@
 							"MIT": "mit"
 						},
 						"outlier_licenses": [],
-						"unknown_licenses": [],
+						"unknown_licenses": {
+							"really_unknown": [
+								{
+									"license": "mpl-2.0",
+									"package": "@renovatebot/docker-registry-client"
+								}
+							]
+						},
 						"conflict_licenses": [],
 						"_representative_licenses": "mit"
 					}
@@ -252,7 +262,10 @@
 					"status": "Successful",
 					"outlier_packages": [],
 					"unknown_licenses": {
-						"really_unknown": [],
+						"really_unknown": [{
+							"license": "mpl-2.0",
+							"package": "@renovatebot/docker-registry-client"
+						}],
 						"component_conflict": []
 					},
 					"conflict_packages": [],
