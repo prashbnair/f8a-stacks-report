@@ -431,7 +431,6 @@ class ReportHelper:
 
             # Get a list of unknown licenses
             unknown_licenses = []
-            print('All unknown licenses: %s' % all_unknown_lic)
             for lic_dict in self.flatten_list(all_unknown_lic):
                 if 'license' in lic_dict:
                     unknown_licenses.append(lic_dict['license'])
