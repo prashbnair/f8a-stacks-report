@@ -429,7 +429,13 @@ class ReportHelper:
             else:
                 avg_response_time['maven'] = 0
 
-                # generate aggregated data section
+            # Get a list of unknown licenses
+            unknown_licenses = []
+            for lic_dict in self.flatten_list(all_unknown_lic):
+                if 'license' in lic_dict:
+                    unknown_licenses.append(lic_dict['license'])
+
+            # generate aggregated data section
             template['stacks_summary'] = {
                 'total_stack_requests_count': total_stack_requests['all'],
                 'npm': {
@@ -454,7 +460,7 @@ class ReportHelper:
                     'average_response_time': '{} ms'.format(avg_response_time['maven'])
                 },
                 'unique_unknown_licenses_with_frequency':
-                    self.populate_key_count(self.flatten_list(all_unknown_lic)),
+                    self.populate_key_count(unknown_licenses),
                 'unique_cves':
                     self.populate_key_count(all_cve_list),
                 'total_average_response_time':
