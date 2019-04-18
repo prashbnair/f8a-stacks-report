@@ -17,6 +17,11 @@ YELLOW=$(tput bold && tput setaf 3)
 F8A_UTIL_VERSION=d6c3ac8
 
 printf "%sShutting down docker-compose ..." "${NORMAL}"
+
+check_python_version() {
+    python3 tools/check_python_version.py 3 6
+}
+
 gc() {
   retval=$?
   docker-compose -f docker-compose.yml down -v || :
@@ -25,6 +30,8 @@ gc() {
 }
 
 trap gc EXIT SIGINT
+
+check_python_version
 
 function start_postgres {
     #pushd local-setup/
@@ -40,7 +47,7 @@ function prepare_venv() {
     VIRTUALENV="$(which virtualenv)"
     if [ $? -eq 1 ]; then
         echo "Trying to find virualenv-3"
-        # python34 which is in CentOS does not have virtualenv binary
+        # python36 which is in CentOS does not have virtualenv binary
         VIRTUALENV="$(which virtualenv-3)"
     fi
     if [ $? -eq 1 ]; then
