@@ -8,6 +8,8 @@ import psycopg2.extras
 import itertools
 import boto3
 import requests
+import heapq
+from operator import itemgetter
 from datetime import datetime as dt
 from psycopg2 import sql
 from collections import Counter
@@ -310,6 +312,10 @@ class ReportHelper:
                 except Exception:
                     continue
 
+    def get_trending(self, mydict, top_trending_count=3):
+        """Generate the top trending items list."""
+        return (dict(heapq.nlargest(top_trending_count, mydict.items(), key=itemgetter(1))))
+
     def normalize_worker_data(self, start_date, end_date, stack_data, worker, frequency='daily'):
         """Normalize worker data for reporting."""
         total_stack_requests = {'all': 0, 'npm': 0, 'maven': 0}
@@ -446,7 +452,12 @@ class ReportHelper:
                     self.populate_key_count(self.flatten_list(all_unknown_deps['npm'])),
                     'unique_stacks_with_frequency': unique_stacks_with_recurrence_count['npm'],
                     'unique_stacks_with_deps_count': unique_stacks_with_deps_count['npm'],
-                    'average_response_time': '{} ms'.format(avg_response_time['npm'])
+                    'average_response_time': '{} ms'.format(avg_response_time['npm']),
+                    'trending': {
+                        'top_stacks':
+                            self.get_trending(unique_stacks_with_recurrence_count['npm'], 3),
+                        'top_deps': self.get_trending(self.flatten_list(all_deps['npm']), 5),
+                    }
                 },
                 'maven': {
                     'stack_requests_count': total_stack_requests['maven'],
@@ -457,7 +468,12 @@ class ReportHelper:
                         self.populate_key_count(self.flatten_list(all_unknown_deps['maven'])),
                     'unique_stacks_with_frequency': unique_stacks_with_recurrence_count['maven'],
                     'unique_stacks_with_deps_count': unique_stacks_with_deps_count['maven'],
-                    'average_response_time': '{} ms'.format(avg_response_time['maven'])
+                    'average_response_time': '{} ms'.format(avg_response_time['maven']),
+                    'trending': {
+                        'top_stacks':
+                            self.get_trending(unique_stacks_with_recurrence_count['maven'], 3),
+                        'top_deps': self.get_trending(self.flatten_list(all_deps['maven']), 5),
+                    }
                 },
                 'unique_unknown_licenses_with_frequency':
                     self.populate_key_count(unknown_licenses),
