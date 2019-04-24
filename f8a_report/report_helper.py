@@ -338,6 +338,7 @@ class ReportHelper:
         }
 
     def save_result(self, frequency, report_name, template):
+        """Save result in S3 bucket."""
         try:
             obj_key = '{depl_prefix}/{freq}/{report_name}.json'.format(
                 depl_prefix=self.s3.deployment_prefix, freq=frequency, report_name=report_name

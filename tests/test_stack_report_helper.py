@@ -316,4 +316,3 @@ def test_retrieve_worker_results():
     """Test failure worker results."""
     res = r.retrieve_worker_results('2018-10-10', '2018-10-18', ['1', '2'], [])
     assert res == {}
-
