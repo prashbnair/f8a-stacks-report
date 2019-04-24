@@ -14,8 +14,6 @@ from datetime import datetime as dt
 from psycopg2 import sql
 from collections import Counter
 from botocore.exceptions import ClientError
-from graph_report_generator import generate_report_for_unknown_epvs,\
-    generate_report_for_latest_version
 
 logger = logging.getLogger(__file__)
 
