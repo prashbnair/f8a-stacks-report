@@ -456,7 +456,8 @@ class ReportHelper:
                     'trending': {
                         'top_stacks':
                             self.get_trending(unique_stacks_with_recurrence_count['npm'], 3),
-                        'top_deps': self.get_trending(self.flatten_list(all_deps['npm']), 5),
+                        'top_deps': self.get_trending(
+                            self.populate_key_count(self.flatten_list(all_deps['npm'])), 5),
                     }
                 },
                 'maven': {
@@ -472,7 +473,8 @@ class ReportHelper:
                     'trending': {
                         'top_stacks':
                             self.get_trending(unique_stacks_with_recurrence_count['maven'], 3),
-                        'top_deps': self.get_trending(self.flatten_list(all_deps['maven']), 5),
+                        'top_deps': self.get_trending(
+                            self.populate_key_count(self.flatten_list(all_deps['maven'])), 5),
                     }
                 },
                 'unique_unknown_licenses_with_frequency':
