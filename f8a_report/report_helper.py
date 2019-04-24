@@ -316,6 +316,37 @@ class ReportHelper:
         """Generate the top trending items list."""
         return (dict(heapq.nlargest(top_trending_count, mydict.items(), key=itemgetter(1))))
 
+    def get_ecosystem_summary(self, ecosystem, total_stack_requests, all_deps, all_unknown_deps,
+                              unique_stacks_with_recurrence_count, unique_stacks_with_deps_count,
+                              avg_response_time):
+        """Generate ecosystem specific stack summary."""
+        return {
+            'stack_requests_count': total_stack_requests[ecosystem],
+            'unique_dependencies_with_frequency':
+            self.populate_key_count(self.flatten_list(all_deps[ecosystem])),
+            'unique_unknown_dependencies_with_frequency':
+            self.populate_key_count(self.flatten_list(all_unknown_deps[ecosystem])),
+            'unique_stacks_with_frequency': unique_stacks_with_recurrence_count[ecosystem],
+            'unique_stacks_with_deps_count': unique_stacks_with_deps_count[ecosystem],
+            'average_response_time': '{} ms'.format(avg_response_time[ecosystem]),
+            'trending': {
+                'top_stacks':
+                    self.get_trending(unique_stacks_with_recurrence_count[ecosystem], 3),
+                'top_deps': self.get_trending(
+                    self.populate_key_count(self.flatten_list(all_deps[ecosystem])), 5),
+            }
+        }
+
+    def save_result(self, frequency, report_name, template):
+        try:
+            obj_key = '{depl_prefix}/{freq}/{report_name}.json'.format(
+                depl_prefix=self.s3.deployment_prefix, freq=frequency, report_name=report_name
+            )
+            self.s3.store_json_content(content=template, obj_key=obj_key,
+                                       bucket_name=self.s3.report_bucket_name)
+        except Exception as e:
+            logger.exception('Unable to store the report on S3. Reason: %r' % e)
+
     def normalize_worker_data(self, start_date, end_date, stack_data, worker, frequency='daily'):
         """Normalize worker data for reporting."""
         total_stack_requests = {'all': 0, 'npm': 0, 'maven': 0}
@@ -444,39 +475,16 @@ class ReportHelper:
             # generate aggregated data section
             template['stacks_summary'] = {
                 'total_stack_requests_count': total_stack_requests['all'],
-                'npm': {
-                    'stack_requests_count': total_stack_requests['npm'],
-                    'unique_dependencies_with_frequency':
-                    self.populate_key_count(self.flatten_list(all_deps['npm'])),
-                    'unique_unknown_dependencies_with_frequency':
-                    self.populate_key_count(self.flatten_list(all_unknown_deps['npm'])),
-                    'unique_stacks_with_frequency': unique_stacks_with_recurrence_count['npm'],
-                    'unique_stacks_with_deps_count': unique_stacks_with_deps_count['npm'],
-                    'average_response_time': '{} ms'.format(avg_response_time['npm']),
-                    'trending': {
-                        'top_stacks':
-                            self.get_trending(unique_stacks_with_recurrence_count['npm'], 3),
-                        'top_deps': self.get_trending(
-                            self.populate_key_count(self.flatten_list(all_deps['npm'])), 5),
-                    }
-                },
-                'maven': {
-                    'stack_requests_count': total_stack_requests['maven'],
-                    'total_stack_requests_count': total_stack_requests['maven'],
-                    'unique_dependencies_with_frequency':
-                        self.populate_key_count(self.flatten_list(all_deps['maven'])),
-                    'unique_unknown_dependencies_with_frequency':
-                        self.populate_key_count(self.flatten_list(all_unknown_deps['maven'])),
-                    'unique_stacks_with_frequency': unique_stacks_with_recurrence_count['maven'],
-                    'unique_stacks_with_deps_count': unique_stacks_with_deps_count['maven'],
-                    'average_response_time': '{} ms'.format(avg_response_time['maven']),
-                    'trending': {
-                        'top_stacks':
-                            self.get_trending(unique_stacks_with_recurrence_count['maven'], 3),
-                        'top_deps': self.get_trending(
-                            self.populate_key_count(self.flatten_list(all_deps['maven'])), 5),
-                    }
-                },
+                'npm': self.get_ecosystem_summary('npm', total_stack_requests, all_deps,
+                                                  all_unknown_deps,
+                                                  unique_stacks_with_recurrence_count,
+                                                  unique_stacks_with_deps_count,
+                                                  avg_response_time),
+                'maven': self.get_ecosystem_summary('maven', total_stack_requests, all_deps,
+                                                    all_unknown_deps,
+                                                    unique_stacks_with_recurrence_count,
+                                                    unique_stacks_with_deps_count,
+                                                    avg_response_time),
                 'unique_unknown_licenses_with_frequency':
                     self.populate_key_count(unknown_licenses),
                 'unique_cves':
@@ -484,14 +492,7 @@ class ReportHelper:
                 'total_average_response_time':
                     '{} ms'.format(total_response_time['all'] / len(template['stacks_details'])),
             }
-            try:
-                obj_key = '{depl_prefix}/{freq}/{report_name}.json'.format(
-                    depl_prefix=self.s3.deployment_prefix, freq=frequency, report_name=report_name
-                )
-                self.s3.store_json_content(content=template, obj_key=obj_key,
-                                           bucket_name=self.s3.report_bucket_name)
-            except Exception as e:
-                logger.exception('Unable to store the report on S3. Reason: %r' % e)
+            self.save_result(frequency, report_name, template)
             return template
         else:
             # todo: user feedback aggregation based on the recommendation task results
@@ -520,6 +521,8 @@ class ReportHelper:
                                                         frequency)
         return result
 
+    '''
+    # TODO: Ingestion data report has to be reworked
     def retrieve_ingestion_results(self, start_date, end_date, frequency='daily'):
         """Retrieve results for selected worker from RDB."""
         result = {}
@@ -669,11 +672,11 @@ class ReportHelper:
         except Exception as e:
             logger.exception('Unable to store the report on S3. Reason: %r' % e)
         return template
-
+    '''
     def get_report(self, start_date, end_date, frequency='daily'):
         """Generate the stacks report."""
         ids = self.retrieve_stack_analyses_ids(start_date, end_date)
-        ingestion_results = False
+        '''ingestion_results = False
         if frequency == 'daily':
             result = self.retrieve_ingestion_results(start_date, end_date)
             epv_failed_data = result['EPV_GRAPH_FAILED_DATA']
@@ -686,11 +689,12 @@ class ReportHelper:
                 ingestion_results = False
                 logger.error('No ingestion data found from {s} to {e} to generate report'
                              .format(s=start_date, e=end_date))
+        '''
         if len(ids) > 0:
             worker_result = self.retrieve_worker_results(
                 start_date, end_date, ids, ['stack_aggregator_v2'], frequency)
-            return worker_result, ingestion_results
+            return worker_result
         else:
             logger.error('No stack analyses found from {s} to {e} to generate an aggregated report'
                          .format(s=start_date, e=end_date))
-            return False, ingestion_results
+            return False
