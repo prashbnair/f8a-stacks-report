@@ -1,7 +1,6 @@
 """Tests for classes from stack_report_helper module."""
 
-from f8a_report.report_helper import ReportHelper, S3Helper, Postgres
-from pathlib import Path
+from f8a_report.report_helper import ReportHelper, S3Helper
 import pytest
 from unittest import mock
 import json
@@ -328,7 +327,7 @@ def test_get_report(_mock1, _mock2):
 @mock.patch('f8a_report.report_helper.ReportHelper.retrieve_stack_analyses_ids', return_value=[])
 @mock.patch('f8a_report.report_helper.ReportHelper.retrieve_ingestion_results',
             return_value=ingestiondata)
-def test_get_report(_mock1, _mock2, _mock3):
+def test_get_report_negative_results(_mock1, _mock2, _mock3):
     """Test failure Get Report."""
     res, ing_res = r.get_report('2018-10-10', '2018-10-18')
     assert res is False
