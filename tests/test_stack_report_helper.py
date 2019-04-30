@@ -317,6 +317,8 @@ def test_normalize_worker_data_no_stack_aggregator(_mock_count):
 
 @mock.patch('f8a_report.report_helper.ReportHelper.retrieve_worker_results', return_value=True)
 @mock.patch('f8a_report.report_helper.ReportHelper.retrieve_stack_analyses_ids', return_value=['1'])
+@mock.patch('f8a_report.report_helper.ReportHelper.retrieve_ingestion_results',
+            return_value=ingestiondata)
 def test_get_report(_mock1, _mock2):
     """Test sucess Get Report."""
     res, ing_res = r.get_report('2018-10-10', '2018-10-18')
