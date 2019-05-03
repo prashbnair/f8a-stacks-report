@@ -3,6 +3,7 @@
 from f8a_report.main import time_to_generate_monthly_report, main
 from unittest import mock
 
+
 class TodayMockClass:
     """Mock class for `today` from datetime module."""
 

@@ -319,7 +319,7 @@ def test_retrieve_worker_results():
 
 
 def test_get_trending():
-    """"Test top trending."""
+    """Test top trending."""
     test_dict = {'a': 20, 'b': 2, 'c': 1, 'd': 100}
     res = r.get_trending(test_dict, 2)
     expected_output = {'d': 100, 'a': 20}
