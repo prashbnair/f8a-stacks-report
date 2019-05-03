@@ -1,7 +1,7 @@
 """Tests for classes from stack_report_helper module."""
 
 from f8a_report.report_helper import ReportHelper, S3Helper, Postgres
-from pathlib import Path
+from f8a_report.main import main
 import pytest
 from unittest import mock
 import json
@@ -316,3 +316,11 @@ def test_retrieve_worker_results():
     """Test failure worker results."""
     res = r.retrieve_worker_results('2018-10-10', '2018-10-18', ['1', '2'], [])
     assert res == {}
+
+
+def test_get_trending():
+    """"Test top trending."""
+    test_dict = {'a': 20, 'b': 2, 'c': 1, 'd': 100}
+    res = r.get_trending(test_dict, 2)
+    expected_output = {'d': 100, 'a': 20}
+    assert(res == expected_output)

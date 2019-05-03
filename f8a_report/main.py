@@ -3,7 +3,7 @@
 import logging
 import json
 from datetime import datetime as dt, timedelta, date
-from report_helper import ReportHelper
+from f8a_report.report_helper import ReportHelper
 
 
 logger = logging.getLogger(__file__)
@@ -18,15 +18,15 @@ def time_to_generate_monthly_report(today):
 def main():
     """Generate the weekly and monthly stacks report."""
     r = ReportHelper()
+    monthly_response = False
 
     today = dt.today()
 
     start_date = (today - timedelta(days=1)).strftime('%Y-%m-%d')
     end_date = today.strftime('%Y-%m-%d')
-    daily_response, ingestion_results = r.get_report(start_date, end_date, 'daily')
+    daily_response = r.get_report(start_date, end_date, 'daily')
     logger.debug('Daily report data from {s} to {e}'.format(s=start_date, e=end_date))
     logger.debug(json.dumps(daily_response, indent=2))
-    logger.debug(json.dumps(ingestion_results, indent=2))
 
     if time_to_generate_monthly_report(today):
         last_day_of_prev_month = date(today.year, today.month, 1) - timedelta(days=1)
@@ -36,6 +36,7 @@ def main():
         logger.debug('Monthly report data from {s} to {e}'.format(s=start_date, e=end_date))
         logger.debug(json.dumps(monthly_response, indent=2))
 
+    return monthly_response
 
 if __name__ == '__main__':
     main()
