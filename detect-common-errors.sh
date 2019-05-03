@@ -1,6 +1,6 @@
 #!/bin/bash
 
-directories="f8a_report tools"
+directories="f8a_report tools tests"
 separate_files="setup.py"
 
 pass=0

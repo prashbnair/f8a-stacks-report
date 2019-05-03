@@ -213,10 +213,11 @@ class ReportHelper:
                                                        obj_key=collated_user_input_obj_key) or {}
 
         for eco in unique_stacks_with_recurrence_count.keys() | collated_user_input.keys():
-            result.update({eco: dict(
-                Counter(unique_stacks_with_recurrence_count.get(eco)) +
-                Counter(collated_user_input.get(eco)))
-            })
+            result.update({eco: {
+                "user_input_stack": dict(
+                            Counter(unique_stacks_with_recurrence_count.get(eco)) +
+                            Counter(collated_user_input.get(eco, {}).get('user_input_stack')))
+            }})
 
         # Store user input collated data back to S3
         self.s3.store_json_content(content=result, bucket_name=self.s3.report_bucket_name,
@@ -228,12 +229,11 @@ class ReportHelper:
         collated_big_query_data = self.s3.read_json_object(bucket_name=self.s3.report_bucket_name,
                                                            obj_key=collated_big_query_obj_key) or {}
 
-        for eco in result.keys() | collated_big_query_data.keys():
-            result.update({
-                eco: dict(Counter(result.get(eco)) +
-                          Counter(collated_big_query_data.get(eco)))
-                    })
-
+        for eco in collated_big_query_data.keys():
+            if result.get(eco):
+                result[eco]["bigquery_data"] = collated_big_query_data.get(eco)
+            else:
+                result[eco] = {"bigquery_data": collated_big_query_data.get(eco)}
         return result
 
     def invoke_emr_api(self, bucket_name, ecosystem, data_version, github_repo):
@@ -259,26 +259,37 @@ class ReportHelper:
         except Exception:
             logger.error('Failed to invoke EMR API for {eco} ecosystem'.format(eco=ecosystem))
 
+    def get_training_data_for_ecosystem(self, eco, stack_dict):
+        """Get Training data for an ecosystem."""
+        unique_stacks = {}
+        package_dict_for_eco = {
+            "user_input_stack": [],
+            "bigquery_data": []
+        }
+        for stack_type, stacks in stack_dict.items():
+            for package_string in stacks:
+                package_list = [x.strip().split(' ')[0]
+                                for x in package_string.split(',')]
+                stack_str = "".join(package_list)
+                if stack_str not in unique_stacks:
+                    unique_stacks[stack_str] = 1
+                    package_dict_for_eco.get(stack_type).append(package_list)
+
+        training_data = {
+            'ecosystem': eco,
+            'package_dict': package_dict_for_eco
+        }
+
+        return training_data
+
     def store_training_data(self, result):
         """Store Training Data for each ecosystem in their respective buckets."""
         model_version = dt.now().strftime('%Y-%m-%d')
 
-        for eco, stacks in result.items():
-            unique_stacks = {}
+        for eco, stack_dict in result.items():
+            training_data = self.get_training_data_for_ecosystem(eco, stack_dict)
             obj_key = '{eco}/{depl_prefix}/{model_version}/data/manifest.json'.format(
                 eco=eco, depl_prefix=self.s3.deployment_prefix, model_version=model_version)
-            package_list_for_eco = []
-            for packages, reccurrence_count in stacks.items():
-                package_list = [x.strip().split(' ')[0] for x in packages.split(',')]
-                stack_str = "".join(package_list)
-                if stack_str not in unique_stacks:
-                    unique_stacks[stack_str] = 1
-                    package_list_for_eco.append(package_list)
-
-            training_data = {
-                'ecosystem': eco,
-                'package_list': package_list_for_eco
-            }
 
             # Get the bucket name based on ecosystems to store user-input stacks for retraining
             if eco == 'maven':
@@ -348,12 +359,17 @@ class ReportHelper:
 
     def normalize_worker_data(self, start_date, end_date, stack_data, worker, frequency='daily'):
         """Normalize worker data for reporting."""
+        # Adding some dummy comments because of low maintainability index.
+        # This needs to be fixed by the original author.
         total_stack_requests = {'all': 0, 'npm': 0, 'maven': 0}
+
+        # Collect monthly statistics
         if frequency == 'monthly':
             report_name = dt.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m')
         else:
             report_name = dt.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m-%d')
 
+        # Prepare the template
         stack_data = json.loads(stack_data)
         template = {
             'report': {
@@ -369,6 +385,7 @@ class ReportHelper:
         all_unknown_lic = []
         all_cve_list = []
 
+        # Process the response
         total_response_time = {'all': 0.0, 'npm': 0.0, 'maven': 0.0}
         if worker == 'stack_aggregator_v2':
             stacks_list = {'npm': [], 'maven': []}
@@ -551,6 +568,8 @@ class ReportHelper:
 
     def normalize_ingestion_data(self, start_date, end_date, ingestion_data, frequency='daily'):
         """Normalize worker data for reporting."""
+        # Adding some dummy comments because of low maintainability index.
+        # This needs to be fixed by the original author.
         report_type = 'ingestion-data'
         if frequency == 'monthly':
             report_name = dt.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m')

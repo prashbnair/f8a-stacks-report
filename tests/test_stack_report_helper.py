@@ -1,7 +1,6 @@
 """Tests for classes from stack_report_helper module."""
 
-from f8a_report.report_helper import ReportHelper, S3Helper, Postgres
-from f8a_report.main import main
+from f8a_report.report_helper import ReportHelper, S3Helper
 import pytest
 from unittest import mock
 import json
@@ -21,6 +20,9 @@ emr_resp = {
     },
     "JobFlowId": "j-LF2OPMVXAPQD"
 }
+
+with open('tests/data/stacks_with_recurrence_count.json', 'r') as f:
+    unique_stacks_with_recurrence_count = json.load(f)
 
 with open('tests/data/collateddata.json', 'r') as f:
     collateddata = json.load(f)
@@ -208,11 +210,18 @@ def test_store_training_data(_mock1):
     assert resp is None
 
 
+def test_get_training_data_for_eco():
+    """Test the generation of training data for npm."""
+    resp = r.get_training_data_for_ecosystem(eco='npm', stack_dict=stack_dict)
+
+    assert resp == manifest
+
+
 @mock.patch('f8a_report.report_helper.S3Helper.store_json_content', return_value=True)
 @mock.patch('f8a_report.report_helper.S3Helper.read_json_object', return_value=collateddata)
 def test_collate_raw_data(_mock1, _mock2):
     """Test result collation success scenario."""
-    result = r.collate_raw_data(collateddata, 'weekly')
+    result = r.collate_raw_data(unique_stacks_with_recurrence_count, 'weekly')
 
     assert result is not None
 
@@ -298,7 +307,9 @@ def test_normalize_worker_data_no_stack_aggregator(_mock_count):
 
 @mock.patch('f8a_report.report_helper.ReportHelper.retrieve_worker_results', return_value=True)
 @mock.patch('f8a_report.report_helper.ReportHelper.retrieve_stack_analyses_ids', return_value=['1'])
-def test_get_report(_mock1, _mock2):
+@mock.patch('f8a_report.report_helper.ReportHelper.retrieve_ingestion_results',
+            return_value=ingestiondata)
+def test_get_report(_mock1, _mock2, _mock3):
     """Test sucess Get Report."""
     res = r.get_report('2018-10-10', '2018-10-18')
     assert res is True
@@ -306,7 +317,7 @@ def test_get_report(_mock1, _mock2):
 
 @mock.patch('f8a_report.report_helper.ReportHelper.retrieve_worker_results', return_value=True)
 @mock.patch('f8a_report.report_helper.ReportHelper.retrieve_stack_analyses_ids', return_value=[])
-def test_get_report(_mock1, _mock2):
+def test_get_report_negative_results(_mock1, _mock2):
     """Test failure Get Report."""
     res = r.get_report('2018-10-10', '2018-10-18')
     assert res is False
