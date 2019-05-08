@@ -543,7 +543,7 @@ class ReportHelper:
         """Retrieve results for selected worker from RDB."""
         result = {}
 
-        # No of EPV failed ingesting into graph
+        # Query to fetch the EPVs that were ingested on a particular day
 
         query = sql.SQL('SELECT EC.NAME, PK.NAME, VR.IDENTIFIER FROM ANALYSES AN,'
                         ' PACKAGES PK, VERSIONS VR, ECOSYSTEMS EC WHERE'
@@ -556,79 +556,72 @@ class ReportHelper:
         result['EPV_DATA'] = data
         return self.normalize_ingestion_data(start_date, end_date, result, frequency)
 
-    def get_package_results(self, epvs, template):
+    def generate_results(self, epvs, template, pkg_output, ver_output):
         """Get package information from graph."""
-        graph_output = generate_report_for_latest_version(epvs)
         template['ingestion_summary']['incorrect_latest_version'] = {}
+        template['ingestion_summary']['unknown_deps'] = {}
         count = {}
         latest_epvs = []
         for epv in epvs:
             eco = epv['ecosystem']
             pkg = epv['name']
+            ver = epv['version']
+
+            # Add parameters to count the different params
             if eco not in count:
                 count[eco] = {
-                    'total_incorrect_versions': 0,
-                    'total_correct_versions': 0
+                    'incorrect_latest_versions': 0,
+                    'correct_latest_versions': 0,
+                    'ingested_in_graph': 0,
+                    'not_ingested_in_graph': 0
                 }
             if eco not in template['ingestion_summary']['incorrect_latest_version']:
                 template['ingestion_summary']['incorrect_latest_version'][eco] = []
-            output = graph_output[eco + "@DELIM@" + pkg]
-            known_latest_ver = output['known_latest_version']
-            actual_latest_ver = output['actual_latest_version']
-            if (actual_latest_ver and not known_latest_ver) \
-                    | (actual_latest_ver != known_latest_ver):
-                tmp = {
-                    "package": pkg,
-                    "actual_latest_version": actual_latest_ver,
-                    "known_latest_version": known_latest_ver
-                }
-                template['ingestion_summary']['incorrect_latest_version'][eco].append(tmp)
-                count[eco]['total_incorrect_versions'] += 1
+                template['ingestion_summary']['unknown_deps'][eco] = []
+            pkg_data = pkg_output[eco + "@DELIM@" + pkg]
+            ver_data = ver_output[eco + "@DELIM@" + pkg + "@DELIM@" + ver]
+            actual_latest_ver = pkg_data['actual_latest_version']
 
+            # check if the package is publicly available
             if actual_latest_ver:
+                known_latest_ver = pkg_data['known_latest_version']
+                if actual_latest_ver != known_latest_ver:
+                    tmp = {
+                        "package": pkg,
+                        "actual_latest_version": actual_latest_ver,
+                        "known_latest_version": known_latest_ver
+                    }
+                    template['ingestion_summary']['incorrect_latest_version'][eco].append(tmp)
+                    count[eco]['incorrect_latest_versions'] += 1
+
                 template['ingestion_details'][eco][pkg]['known_latest_version'] \
-                    = output['known_latest_version']
+                    = known_latest_ver
                 template['ingestion_details'][eco][pkg]['actual_latest_version'] \
-                    = output['actual_latest_version']
+                    = actual_latest_ver
                 latest_json = {
                     "ecosystem": eco,
                     "name": pkg,
                     "version": actual_latest_ver
                 }
                 latest_epvs.append(latest_json)
-                if actual_latest_ver == known_latest_ver:
-                    count[eco]['total_correct_versions'] += 1
-            else:
-                template['ingestion_details'][eco][pkg]['private_pkg'] = "true"
-        template['ingestion_summary']['version_stats'] = count
-        return template, latest_epvs
 
-    def get_unknown_results(self, epvs, template):
-        """Get version information from graph."""
-        graph_output = generate_report_for_unknown_epvs(epvs)
-        count = {}
-        template['ingestion_summary']['unknown_deps'] = {}
-        for epv in epvs:
-            eco = epv['ecosystem']
-            pkg = epv['name']
-            ver = epv['version']
-            if eco not in count:
-                count[eco] = {
-                    'ingested_in_graph': 0,
-                    'not_ingested_in_graph': 0
-                }
-            if eco not in template['ingestion_summary']['unknown_deps']:
-                template['ingestion_summary']['unknown_deps'][eco] = []
-            output = graph_output[eco + "@DELIM@" + pkg + "@DELIM@" + ver]
-            if 'private_pkg' not in template['ingestion_details'][eco][pkg]:
-                template['ingestion_details'][eco][pkg][ver]['synced_to_graph'] = output
-                if output == "false":
+                # Count the correct latest version EPVs
+                if actual_latest_ver == known_latest_ver:
+                    count[eco]['correct_latest_versions'] += 1
+
+                # Add to report if the EPV exist in the graph or not
+                template['ingestion_details'][eco][pkg][ver]['synced_to_graph'] = ver_data
+                if ver_data == "false":
                     template['ingestion_summary']['unknown_deps'][eco].append(epv)
                     count[eco]['not_ingested_in_graph'] += 1
                 else:
                     count[eco]['ingested_in_graph'] += 1
-        template['ingestion_summary']['ingestion_stats'] = count
-        return template
+            else:
+                # Mark the package as private as the information is not present publicly
+                template['ingestion_details'][eco][pkg]['private_pkg'] = "true"
+
+        template['ingestion_summary']['stats'] = count
+        return template, latest_epvs
 
     def check_latest_node(self, latest_epvs, template):
         """Get if latest node is present in graph."""
@@ -640,6 +633,8 @@ class ReportHelper:
             ver = epv['version']
             output = graph_output[eco + "@DELIM@" + pkg + "@DELIM@" + ver]
             template['ingestion_details'][eco][pkg]['latest_node_in_graph'] = output
+
+            # If the EPV is missing in graph, add it to the summary
             if output == "false":
                 if eco not in missing_latest:
                     missing_latest[eco] = []
@@ -651,10 +646,39 @@ class ReportHelper:
         template['ingestion_summary']['missing_latest_node'] = missing_latest
         return template
 
+    def populate_default_information(self, epv_data, template):
+        """To populate the default information in the template."""
+        epvs = []
+        ing_details = {}
+        for epv in epv_data:
+            eco = epv[0]
+            pkg = epv[1]
+            ver = epv[2]
+            epv_template = {
+                'ecosystem': eco,
+                'name': pkg,
+                'version': ver
+            }
+            epvs.append(epv_template)
+
+            # Add eco key in json if missing
+            if eco not in ing_details:
+                ing_details[eco] = {}
+
+            # Add pkg key in json if missing
+            if pkg not in ing_details[eco]:
+                ing_details[eco][pkg] = {}
+
+            # Add version key in json if missing
+            if ver not in ing_details[eco][pkg]:
+                ing_details[eco][pkg][ver] = {}
+
+        # Add the EPV information to the template
+        template['ingestion_details'] = ing_details
+        return template, epvs
+
     def normalize_ingestion_data(self, start_date, end_date, ingestion_data, frequency='daily'):
         """Normalize worker data for reporting."""
-        # Adding some dummy comments because of low maintainability index.
-        # This needs to be fixed by the original author.
         report_type = 'ingestion-data'
         if frequency == 'monthly':
             report_name = dt.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m')
@@ -674,28 +698,16 @@ class ReportHelper:
         epv_data = ingestion_data['EPV_DATA']
         epv_data = json.loads(epv_data)
 
-        epvs = []
-        ing_details = {}
-        for epv in epv_data:
-            eco = epv[0]
-            pkg = epv[1]
-            ver = epv[2]
-            epv_template = {
-                'ecosystem': eco,
-                'name': pkg,
-                'version': ver
-            }
-            epvs.append(epv_template)
+        # Populate the default template with EPV info
+        template, epvs = self.populate_default_information(epv_data, template)
 
-            if eco not in ing_details:
-                ing_details[eco] = {}
-            if pkg not in ing_details[eco]:
-                ing_details[eco][pkg] = {}
-            if ver not in ing_details[eco][pkg]:
-                ing_details[eco][pkg][ver] = {}
-        template['ingestion_details'] = ing_details
-        template, latest_epvs = self.get_package_results(epvs, template)
-        template = self.get_unknown_results(epvs, template)
+        pkg_output = generate_report_for_latest_version(epvs)
+        ver_output = generate_report_for_unknown_epvs(epvs)
+
+        # Call the function to add the package information to the template
+        template, latest_epvs = self.generate_results(epvs, template, pkg_output, ver_output)
+
+        # Call the function to get the availability of latest node
         template = self.check_latest_node(latest_epvs, template)
 
         # Saving the final report in the relevant S3 bucket
