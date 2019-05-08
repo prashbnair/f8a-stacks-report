@@ -30,10 +30,6 @@ with open('tests/data/collateddata.json', 'r') as f:
 with open('tests/data/stackdata.json', 'r') as f:
     stackdata = f.read()
 
-with open('tests/data/ingestiondata.json', 'r') as f:
-    ingestiondata = f.read()
-    ingestiondata = json.loads(ingestiondata)
-
 with open('tests/data/stackdict.json', 'r') as f:
     stack_dict = json.load(f)
 
@@ -317,21 +313,17 @@ def test_normalize_worker_data_no_stack_aggregator(_mock_count):
 
 @mock.patch('f8a_report.report_helper.ReportHelper.retrieve_worker_results', return_value=True)
 @mock.patch('f8a_report.report_helper.ReportHelper.retrieve_stack_analyses_ids', return_value=['1'])
-@mock.patch('f8a_report.report_helper.ReportHelper.retrieve_ingestion_results',
-            return_value=ingestiondata)
-def test_get_report(_mock1, _mock2, _mock3):
+def test_get_report(_mock1, _mock2):
     """Test sucess Get Report."""
-    res, ing_res = r.get_report('2018-10-10', '2018-10-18')
+    res = r.get_report('2018-10-10', '2018-10-18')
     assert res is True
 
 
 @mock.patch('f8a_report.report_helper.ReportHelper.retrieve_worker_results', return_value=True)
 @mock.patch('f8a_report.report_helper.ReportHelper.retrieve_stack_analyses_ids', return_value=[])
-@mock.patch('f8a_report.report_helper.ReportHelper.retrieve_ingestion_results',
-            return_value=ingestiondata)
-def test_get_report_negative_results(_mock1, _mock2, _mock3):
+def test_get_report_negative_results(_mock1, _mock2):
     """Test failure Get Report."""
-    res, ing_res = r.get_report('2018-10-10', '2018-10-18')
+    res = r.get_report('2018-10-10', '2018-10-18')
     assert res is False
 
 
@@ -341,8 +333,9 @@ def test_retrieve_worker_results():
     assert res == {}
 
 
-@mock.patch('f8a_report.report_helper.S3Helper.store_json_content', return_value=True)
-def test_normalize_ingestion_data(_mock1):
-    """Test the success scenario of the function normalize_worker_data."""
-    resp = r.normalize_ingestion_data('2018-10-10', '2018-10-18', ingestiondata, 'daily')
-    assert resp is not None
+def test_get_trending():
+    """Test top trending."""
+    test_dict = {'a': 20, 'b': 2, 'c': 1, 'd': 100}
+    res = r.get_trending(test_dict, 2)
+    expected_output = {'d': 100, 'a': 20}
+    assert(res == expected_output)
