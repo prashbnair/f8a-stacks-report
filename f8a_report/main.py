@@ -3,7 +3,7 @@
 import logging
 import json
 from datetime import datetime as dt, timedelta, date
-from f8a_report.report_helper import ReportHelper
+from report_helper import ReportHelper
 
 
 logger = logging.getLogger(__file__)
