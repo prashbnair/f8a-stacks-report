@@ -14,6 +14,8 @@ from datetime import datetime as dt
 from psycopg2 import sql
 from collections import Counter
 from botocore.exceptions import ClientError
+from graph_report_generator import generate_report_for_unknown_epvs, \
+    generate_report_for_latest_version
 
 logger = logging.getLogger(__file__)
 
@@ -537,14 +539,204 @@ class ReportHelper:
                                                         frequency)
         return result
 
+    def retrieve_ingestion_results(self, start_date, end_date, frequency='daily'):
+        """Retrieve results for selected worker from RDB."""
+        result = {}
+
+        # Query to fetch the EPVs that were ingested on a particular day
+
+        query = sql.SQL('SELECT EC.NAME, PK.NAME, VR.IDENTIFIER FROM ANALYSES AN,'
+                        ' PACKAGES PK, VERSIONS VR, ECOSYSTEMS EC WHERE'
+                        ' AN.STARTED_AT >= \'%s\' AND AN.STARTED_AT < \'%s\''
+                        ' AND AN.VERSION_ID = VR.ID AND VR.PACKAGE_ID = PK.ID'
+                        ' AND PK.ECOSYSTEM_ID = EC.ID')
+
+        self.cursor.execute(query.as_string(self.conn) % (start_date, end_date))
+        data = json.dumps(self.cursor.fetchall())
+        result['EPV_DATA'] = data
+        return self.normalize_ingestion_data(start_date, end_date, result, frequency)
+
+    def generate_results(self, epvs, template, pkg_output, ver_output):
+        """Get package information from graph."""
+        template['ingestion_summary']['incorrect_latest_version'] = {}
+        template['ingestion_summary']['unknown_deps'] = {}
+        count = {}
+        latest_epvs = []
+        for epv in epvs:
+            eco = epv['ecosystem']
+            pkg = epv['name']
+            ver = epv['version']
+
+            # Add parameters to count the different params
+            if eco not in count:
+                count[eco] = {
+                    'incorrect_latest_versions': 0,
+                    'correct_latest_versions': 0,
+                    'ingested_in_graph': 0,
+                    'not_ingested_in_graph': 0
+                }
+            if eco not in template['ingestion_summary']['incorrect_latest_version']:
+                template['ingestion_summary']['incorrect_latest_version'][eco] = []
+                template['ingestion_summary']['unknown_deps'][eco] = []
+            pkg_data = pkg_output[eco + "@DELIM@" + pkg]
+            ver_data = ver_output[eco + "@DELIM@" + pkg + "@DELIM@" + ver]
+            actual_latest_ver = pkg_data['actual_latest_version']
+
+            # check if the package is publicly available
+            if actual_latest_ver:
+                known_latest_ver = pkg_data['known_latest_version']
+                if actual_latest_ver != known_latest_ver:
+                    tmp = {
+                        "package": pkg,
+                        "actual_latest_version": actual_latest_ver,
+                        "known_latest_version": known_latest_ver
+                    }
+                    template['ingestion_summary']['incorrect_latest_version'][eco].append(tmp)
+                    count[eco]['incorrect_latest_versions'] += 1
+
+                template['ingestion_details'][eco][pkg]['known_latest_version'] \
+                    = known_latest_ver
+                template['ingestion_details'][eco][pkg]['actual_latest_version'] \
+                    = actual_latest_ver
+                latest_json = {
+                    "ecosystem": eco,
+                    "name": pkg,
+                    "version": actual_latest_ver
+                }
+                latest_epvs.append(latest_json)
+
+                # Count the correct latest version EPVs
+                if actual_latest_ver == known_latest_ver:
+                    count[eco]['correct_latest_versions'] += 1
+
+                # Add to report if the EPV exist in the graph or not
+                template['ingestion_details'][eco][pkg][ver]['synced_to_graph'] = ver_data
+                if ver_data == "false":
+                    template['ingestion_summary']['unknown_deps'][eco].append(epv)
+                    count[eco]['not_ingested_in_graph'] += 1
+                else:
+                    count[eco]['ingested_in_graph'] += 1
+            else:
+                # Mark the package as private as the information is not present publicly
+                template['ingestion_details'][eco][pkg]['private_pkg'] = "true"
+
+        template['ingestion_summary']['stats'] = count
+        return template, latest_epvs
+
+    def check_latest_node(self, latest_epvs, template):
+        """Get if latest node is present in graph."""
+        graph_output = generate_report_for_unknown_epvs(latest_epvs)
+        missing_latest = {}
+        for epv in latest_epvs:
+            eco = epv['ecosystem']
+            pkg = epv['name']
+            ver = epv['version']
+            output = graph_output[eco + "@DELIM@" + pkg + "@DELIM@" + ver]
+            template['ingestion_details'][eco][pkg]['latest_node_in_graph'] = output
+
+            # If the EPV is missing in graph, add it to the summary
+            if output == "false":
+                if eco not in missing_latest:
+                    missing_latest[eco] = []
+                tmp = {
+                    "package": pkg,
+                    "version": ver
+                }
+                missing_latest[eco].append(tmp)
+        template['ingestion_summary']['missing_latest_node'] = missing_latest
+        return template
+
+    def populate_default_information(self, epv_data, template):
+        """To populate the default information in the template."""
+        epvs = []
+        ing_details = {}
+        for epv in epv_data:
+            eco = epv[0]
+            pkg = epv[1]
+            ver = epv[2]
+            epv_template = {
+                'ecosystem': eco,
+                'name': pkg,
+                'version': ver
+            }
+            epvs.append(epv_template)
+
+            # Add eco key in json if missing
+            if eco not in ing_details:
+                ing_details[eco] = {}
+
+            # Add pkg key in json if missing
+            if pkg not in ing_details[eco]:
+                ing_details[eco][pkg] = {}
+
+            # Add version key in json if missing
+            if ver not in ing_details[eco][pkg]:
+                ing_details[eco][pkg][ver] = {}
+
+        # Add the EPV information to the template
+        template['ingestion_details'] = ing_details
+        return template, epvs
+
+    def normalize_ingestion_data(self, start_date, end_date, ingestion_data, frequency='daily'):
+        """Normalize worker data for reporting."""
+        report_type = 'ingestion-data'
+        if frequency == 'monthly':
+            report_name = dt.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m')
+        else:
+            report_name = dt.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m-%d')
+
+        template = {
+            'report': {
+                'from': start_date,
+                'to': end_date,
+                'generated_on': dt.now().isoformat('T')
+            },
+            'ingestion_summary': {},
+            'ingestion_details': {}
+        }
+
+        epv_data = ingestion_data['EPV_DATA']
+        epv_data = json.loads(epv_data)
+
+        # Populate the default template with EPV info
+        template, epvs = self.populate_default_information(epv_data, template)
+
+        pkg_output = generate_report_for_latest_version(epvs)
+        ver_output = generate_report_for_unknown_epvs(epvs)
+
+        # Call the function to add the package information to the template
+        template, latest_epvs = self.generate_results(epvs, template, pkg_output, ver_output)
+
+        # Call the function to get the availability of latest node
+        template = self.check_latest_node(latest_epvs, template)
+
+        # Saving the final report in the relevant S3 bucket
+        try:
+            obj_key = '{depl_prefix}/{type}/epv/{report_name}.json'.format(
+                depl_prefix=self.s3.deployment_prefix, type=report_type, report_name=report_name
+            )
+            self.s3.store_json_content(content=template, obj_key=obj_key,
+                                       bucket_name=self.s3.report_bucket_name)
+        except Exception as e:
+            logger.exception('Unable to store the report on S3. Reason: %r' % e)
+        return template
+
     def get_report(self, start_date, end_date, frequency='daily'):
         """Generate the stacks report."""
         ids = self.retrieve_stack_analyses_ids(start_date, end_date)
+        ingestion_results = False
+        if frequency == 'daily':
+            result = self.retrieve_ingestion_results(start_date, end_date)
+            if result['ingestion_details'] != {}:
+                ingestion_results = True
+            else:
+                ingestion_results = False
+
         if len(ids) > 0:
             worker_result = self.retrieve_worker_results(
                 start_date, end_date, ids, ['stack_aggregator_v2'], frequency)
-            return worker_result
+            return worker_result, ingestion_results
         else:
             logger.error('No stack analyses found from {s} to {e} to generate an aggregated report'
                          .format(s=start_date, e=end_date))
-            return False
+            return False, ingestion_results

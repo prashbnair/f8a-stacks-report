@@ -21,7 +21,7 @@ def test_time_to_generate_monthly_report():
     assert time_to_generate_monthly_report(today) is False
 
 
-@mock.patch('f8a_report.main.ReportHelper.get_report', return_value={})
+@mock.patch('f8a_report.main.ReportHelper.get_report', return_value=[{}, True])
 def test_main(_mock1):
     """Test the function main."""
     resp = main()
