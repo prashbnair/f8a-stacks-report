@@ -6,16 +6,15 @@ import logging
 import psycopg2
 import psycopg2.extras
 import itertools
-import boto3
 import requests
 import heapq
 from operator import itemgetter
 from datetime import datetime as dt
 from psycopg2 import sql
 from collections import Counter
-from botocore.exceptions import ClientError
 from graph_report_generator import generate_report_for_unknown_epvs, \
     generate_report_for_latest_version
+from s3_helper import S3Helper
 
 logger = logging.getLogger(__file__)
 
@@ -32,74 +31,6 @@ class Postgres:
                    password=os.getenv('POSTGRESQL_PASSWORD', 'coreapi'))
         self.conn = psycopg2.connect(conn_string)
         self.cursor = self.conn.cursor()
-
-
-class S3Helper:
-    """Helper class for storing reports to S3."""
-
-    def __init__(self):
-        """Init method for the helper class."""
-        self.region_name = os.environ.get('AWS_S3_REGION') or 'us-east-1'
-        self.aws_s3_access_key = os.environ.get('AWS_S3_ACCESS_KEY_ID')
-        self.aws_s3_secret_access_key = os.environ.get('AWS_S3_SECRET_ACCESS_KEY')
-        self.deployment_prefix = os.environ.get('DEPLOYMENT_PREFIX') or 'dev'
-        self.report_bucket_name = os.environ.get('REPORT_BUCKET_NAME')
-
-        if self.aws_s3_secret_access_key is None or self.aws_s3_access_key is None or\
-                self.region_name is None or self.deployment_prefix is None:
-            raise ValueError("AWS credentials or S3 configuration was "
-                             "not provided correctly. Please set the AWS_S3_REGION, "
-                             "AWS_S3_ACCESS_KEY_ID, AWS_S3_SECRET_ACCESS_KEY, REPORT_BUCKET_NAME "
-                             "and DEPLOYMENT_PREFIX correctly.")
-        # S3 endpoint URL is required only for local deployments
-        self.s3_endpoint_url = os.environ.get('S3_ENDPOINT_URL') or 'http://localhost'
-
-        self.s3 = boto3.resource('s3', region_name=self.region_name,
-                                 aws_access_key_id=self.aws_s3_access_key,
-                                 aws_secret_access_key=self.aws_s3_secret_access_key)
-
-    def store_json_content(self, content, bucket_name, obj_key):
-        """Store the report content to the S3 storage."""
-        try:
-            logger.info('Storing the report into the S3 file %s' % obj_key)
-            self.s3.Object(bucket_name, obj_key).put(
-                Body=json.dumps(content, indent=2).encode('utf-8'))
-        except Exception as e:
-            logger.exception('%r' % e)
-
-    def read_json_object(self, bucket_name, obj_key):
-        """Get the report json object found on the S3 bucket."""
-        try:
-            obj = self.s3.Object(bucket_name, obj_key)
-            result = json.loads(obj.get()['Body'].read().decode('utf-8'))
-            return result
-        except ClientError as e:
-            if e.response['Error']['Code'] == 'NoSuchKey':
-                logger.exception('No Such Key %s exists' % obj_key)
-            elif e.response['Error']['Code'] == 'NoSuchBucket':
-                logger.exception('ERROR - No Such Bucket %s exists' % bucket_name)
-            else:
-                logger.exception('%r' % e)
-            return None
-
-    def list_objects(self, bucket_name, frequency):
-        """Fetch the list of objects found on the S3 bucket."""
-        prefix = '{dp}/{freq}'.format(dp=self.deployment_prefix, freq=frequency)
-        res = {'objects': []}
-
-        try:
-            for obj in self.s3.Bucket(bucket_name).objects.filter(Prefix=prefix):
-                if os.path.basename(obj.key) != '':
-                    res['objects'].append(obj.key)
-        except ClientError as e:
-            if e.response['Error']['Code'] == 'NoSuchKey':
-                logger.exception('ERROR - No Such Key %s exists' % prefix)
-            elif e.response['Error']['Code'] == 'NoSuchBucket':
-                logger.exception('ERROR - No Such Bucket %s exists' % bucket_name)
-            else:
-                logger.exception('%r' % e)
-
-        return res
 
 
 class ReportHelper:
@@ -363,7 +294,7 @@ class ReportHelper:
         """Normalize worker data for reporting."""
         # Adding some dummy comments because of low maintainability index.
         # This needs to be fixed by the original author.
-        total_stack_requests = {'all': 0, 'npm': 0, 'maven': 0}
+        total_stack_requests = {'all': 0, 'npm': 0, 'maven': 0, 'pypi': 0}
 
         # Collect monthly statistics
         if frequency == 'monthly':
@@ -382,15 +313,15 @@ class ReportHelper:
             'stacks_summary': {},
             'stacks_details': []
         }
-        all_deps = {'npm': [], 'maven': []}
-        all_unknown_deps = {'npm': [], 'maven': []}
+        all_deps = {'npm': [], 'maven': [], 'pypi': []}
+        all_unknown_deps = {'npm': [], 'maven': [], 'pypi': []}
         all_unknown_lic = []
         all_cve_list = []
 
         # Process the response
-        total_response_time = {'all': 0.0, 'npm': 0.0, 'maven': 0.0}
+        total_response_time = {'all': 0.0, 'npm': 0.0, 'maven': 0.0, 'pypi': 0.0}
         if worker == 'stack_aggregator_v2':
-            stacks_list = {'npm': [], 'maven': []}
+            stacks_list = {'npm': [], 'maven': [], 'pypi': []}
             for data in stack_data:
                 stack_info_template = {
                     'ecosystem': '',
@@ -453,7 +384,8 @@ class ReportHelper:
 
             unique_stacks_with_recurrence_count = {
                 'npm': self.populate_key_count(stacks_list['npm']),
-                'maven': self.populate_key_count(stacks_list['maven'])
+                'maven': self.populate_key_count(stacks_list['maven']),
+                'pypi': self.populate_key_count(stacks_list['pypi'])
             }
 
             today = dt.today()
@@ -484,6 +416,12 @@ class ReportHelper:
             else:
                 avg_response_time['maven'] = 0
 
+            if total_stack_requests['pypi'] > 0:
+                avg_response_time['pypi'] = \
+                    total_response_time['pypi'] / total_stack_requests['pypi']
+            else:
+                avg_response_time['pypi'] = 0
+
             # Get a list of unknown licenses
             unknown_licenses = []
             for lic_dict in self.flatten_list(all_unknown_lic):
@@ -499,6 +437,11 @@ class ReportHelper:
                                                   unique_stacks_with_deps_count,
                                                   avg_response_time),
                 'maven': self.get_ecosystem_summary('maven', total_stack_requests, all_deps,
+                                                    all_unknown_deps,
+                                                    unique_stacks_with_recurrence_count,
+                                                    unique_stacks_with_deps_count,
+                                                    avg_response_time),
+                'pypi': self.get_ecosystem_summary('pypi', total_stack_requests, all_deps,
                                                     all_unknown_deps,
                                                     unique_stacks_with_recurrence_count,
                                                     unique_stacks_with_deps_count,
