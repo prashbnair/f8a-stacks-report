@@ -442,10 +442,10 @@ class ReportHelper:
                                                     unique_stacks_with_deps_count,
                                                     avg_response_time),
                 'pypi': self.get_ecosystem_summary('pypi', total_stack_requests, all_deps,
-                                                    all_unknown_deps,
-                                                    unique_stacks_with_recurrence_count,
-                                                    unique_stacks_with_deps_count,
-                                                    avg_response_time),
+                                                   all_unknown_deps,
+                                                   unique_stacks_with_recurrence_count,
+                                                   unique_stacks_with_deps_count,
+                                                   avg_response_time),
                 'unique_unknown_licenses_with_frequency':
                     self.populate_key_count(unknown_licenses),
                 'unique_cves':
