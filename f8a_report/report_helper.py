@@ -15,6 +15,7 @@ from collections import Counter
 from graph_report_generator import generate_report_for_unknown_epvs, \
     generate_report_for_latest_version
 from s3_helper import S3Helper
+from unknown_deps_report_helper import UnknownDepsReportHelper
 
 logger = logging.getLogger(__file__)
 
@@ -42,6 +43,7 @@ class ReportHelper:
         self.pg = Postgres()
         self.conn = self.pg.conn
         self.cursor = self.pg.cursor
+        self.unknown_deps_helper = UnknownDepsReportHelper()
         self.npm_model_bucket = os.getenv('NPM_MODEL_BUCKET', 'cvae-insights')
         self.maven_model_bucket = os.getenv('MAVEN_MODEL_BUCKET', 'hpf-insights')
         self.pypi_model_bucket = os.getenv('PYPI_MODEL_BUCKET', 'hpf-insights')
@@ -260,7 +262,7 @@ class ReportHelper:
 
     def get_ecosystem_summary(self, ecosystem, total_stack_requests, all_deps, all_unknown_deps,
                               unique_stacks_with_recurrence_count, unique_stacks_with_deps_count,
-                              avg_response_time):
+                              avg_response_time, unknown_deps_ingestion_report):
         """Generate ecosystem specific stack summary."""
         return {
             'stack_requests_count': total_stack_requests[ecosystem],
@@ -276,7 +278,8 @@ class ReportHelper:
                     self.get_trending(unique_stacks_with_recurrence_count[ecosystem], 3),
                 'top_deps': self.get_trending(
                     self.populate_key_count(self.flatten_list(all_deps[ecosystem])), 5),
-            }
+            },
+            'previously_unknown_dependencies': unknown_deps_ingestion_report[ecosystem]
         }
 
     def save_result(self, frequency, report_name, template):
@@ -290,17 +293,18 @@ class ReportHelper:
         except Exception as e:
             logger.exception('Unable to store the report on S3. Reason: %r' % e)
 
+    def get_report_name(self, frequency, end_date):
+        """Create a report name."""
+        if frequency == 'monthly':
+            return dt.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m')
+        else:
+            return dt.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m-%d')
+
     def normalize_worker_data(self, start_date, end_date, stack_data, worker, frequency='daily'):
         """Normalize worker data for reporting."""
-        # Adding some dummy comments because of low maintainability index.
-        # This needs to be fixed by the original author.
         total_stack_requests = {'all': 0, 'npm': 0, 'maven': 0, 'pypi': 0}
 
-        # Collect monthly statistics
-        if frequency == 'monthly':
-            report_name = dt.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m')
-        else:
-            report_name = dt.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m-%d')
+        report_name = self.get_report_name(frequency, end_date)
 
         # Prepare the template
         stack_data = json.loads(stack_data)
@@ -428,6 +432,8 @@ class ReportHelper:
                 if 'license' in lic_dict:
                     unknown_licenses.append(lic_dict['license'])
 
+            unknown_deps_ingestion_report = self.unknown_deps_helper.get_current_ingestion_status()
+
             # generate aggregated data section
             template['stacks_summary'] = {
                 'total_stack_requests_count': total_stack_requests['all'],
@@ -435,17 +441,20 @@ class ReportHelper:
                                                   all_unknown_deps,
                                                   unique_stacks_with_recurrence_count,
                                                   unique_stacks_with_deps_count,
-                                                  avg_response_time),
+                                                  avg_response_time,
+                                                  unknown_deps_ingestion_report),
                 'maven': self.get_ecosystem_summary('maven', total_stack_requests, all_deps,
                                                     all_unknown_deps,
                                                     unique_stacks_with_recurrence_count,
                                                     unique_stacks_with_deps_count,
-                                                    avg_response_time),
+                                                    avg_response_time,
+                                                    unknown_deps_ingestion_report),
                 'pypi': self.get_ecosystem_summary('pypi', total_stack_requests, all_deps,
                                                    all_unknown_deps,
                                                    unique_stacks_with_recurrence_count,
                                                    unique_stacks_with_deps_count,
-                                                   avg_response_time),
+                                                   avg_response_time,
+                                                   unknown_deps_ingestion_report),
                 'unique_unknown_licenses_with_frequency':
                     self.populate_key_count(unknown_licenses),
                 'unique_cves':

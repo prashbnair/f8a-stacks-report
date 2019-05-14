@@ -86,6 +86,38 @@ def generate_report_for_unknown_epvs(epv_list):
     return report_result
 
 
+def find_ingested_epv(ecosystem, pvlist):
+    """Generate a report for the unknown EPVs.
+
+    :param epv_list: list, list of EPVs
+    :return json, list of epv information
+    """
+    query_str = "g.V().has('pecosystem', '{arg0}')." \
+                "has('pname', '{arg1}').has('version', '{arg2}')" \
+                ".valueMap().dedup().fill(epv);"
+    report_result = {}
+    args = []
+    for pv in pvlist:
+        pkg, ver = pv['name'], pv['version']
+        args.append({
+            "0": ecosystem,
+            "1": pkg,
+            "2": ver
+        })
+        report_result['{pkg} {ver}'.format(pkg=pkg, ver=ver)] = 'Unknown'
+
+    result_data = batch_query_executor(query_str, args)
+    if result_data is not None:
+        for res in result_data:
+            pkg = get_value(res, 'pname')
+            ver = get_value(res, 'version')
+            report_result['{pkg} {ver}'.format(pkg=pkg, ver=ver)] = 'Ingested'
+
+    return {'total_previously_unknown_dependencies': len(pvlist),
+            'ingested_dependencies': len(result_data) if result_data else 0,
+            'report': report_result}
+
+
 def generate_report_for_latest_version(epv_list):
     """Generate a report for the latest version.
 
