@@ -23,7 +23,7 @@ class UnknownDepsReportHelper:
             depl_prefix=self.s3.deployment_prefix, report_name=past_date
         )
         result = self.s3.read_json_object(bucket_name=self.s3.report_bucket_name,
-                                          bj_key=past_obj_key)
+                                          obj_key=past_obj_key)
 
         # Return the list of unknown dependencies found
         unknown_deps_list = {'date': past_date}
