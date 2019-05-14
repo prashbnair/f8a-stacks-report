@@ -321,6 +321,8 @@ def test_invoke_emr_api_failure(_mock):
 @mock.patch('f8a_report.report_helper.S3Helper.store_json_content', return_value=True)
 @mock.patch('f8a_report.report_helper.ReportHelper.collate_raw_data', return_value=collateddata)
 @mock.patch('f8a_report.report_helper.ReportHelper.store_training_data', return_value=True)
+@mock.patch('f8a_report.report_helper.UnknownDepsReportHelper.get_current_ingestion_status',
+            return_value={})
 def test_normalize_worker_data(_mock1, _mock2, _mock3):
     """Test the success scenario of the function normalize_worker_data."""
     resp = r.normalize_worker_data('2018-10-10', '2018-10-18',
@@ -338,6 +340,8 @@ def test_normalize_worker_data(_mock1, _mock2, _mock3):
 
 
 @mock.patch('f8a_report.report_helper.S3Helper.store_json_content', return_value=True)
+@mock.patch('f8a_report.report_helper.UnknownDepsReportHelper.get_current_ingestion_status',
+            return_value={})
 def test_normalize_worker_data_no_stack_aggregator(_mock_count):
     """Test the success scenario of the function normalize_worker_data."""
     resp = r.normalize_worker_data('2018-10-10', '2018-10-18',
