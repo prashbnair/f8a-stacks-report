@@ -1,4 +1,4 @@
-"""Tests for classes from stack_report_helper module."""
+"""Tests for classes from unknown_deps_report_helper module."""
 
 from f8a_report.unknown_deps_report_helper import UnknownDepsReportHelper
 from unittest import mock
