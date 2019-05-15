@@ -2,7 +2,7 @@
 
 from f8a_report.graph_report_generator import execute_gremlin_dsl, \
     generate_report_for_unknown_epvs, generate_report_for_latest_version, \
-    generate_report_for_cves
+    generate_report_for_cves, find_ingested_epv
 from unittest import mock
 
 
@@ -79,6 +79,23 @@ def mock_response2():
                             "2.0.7"
                         ]
                     }
+                }
+            ]
+        }
+
+    }
+    return x
+
+
+def mock_response3():
+    """Generate data for mock response."""
+    x = {
+        "result": {
+            "data": [
+                {
+                    "pname": ["serve-static"],
+                    "pecosystem": ["npm"],
+                    "version": ["1.7.1"]
                 }
             ]
         }
@@ -167,3 +184,22 @@ def test_execute_gremlin_dsl(mocker):
     }
     out = execute_gremlin_dsl(payload)
     assert out is None
+
+
+@mock.patch("f8a_report.graph_report_generator.execute_gremlin_dsl")
+def test_find_ingested_epv(mocker):
+    mocker.return_value = mock_response3()
+    epv_list = [{
+                    "name": "serve-static",
+                    "version": "1.7.1"
+                },
+                {
+                    "name": "lodash",
+                    "version": "2.40.1"
+                }]
+    out = find_ingested_epv('npm', epv_list)
+
+    assert out['total_previously_unknown_dependencies'] == 2
+    assert out['ingested_dependencies'] == 1
+    assert out['report']['lodash 2.40.1'] == 'Unknown'
+    assert out['report']['serve-static 1.7.1'] == 'Ingested'

@@ -26,8 +26,8 @@ class UnknownDepsReportHelper:
                                           obj_key=past_obj_key)
 
         # Return the list of unknown dependencies found
-        unknown_deps_list = {'date': past_date}
         ecosystem_list = ['npm', 'maven', 'pypi']
+        unknown_deps_list = {}
         for eco in ecosystem_list:
             deps = []
             unknown_deps = result.get('stacks_summary', {}).get(eco, {}).\
@@ -43,9 +43,9 @@ class UnknownDepsReportHelper:
         """Generate ingestion report for previously unknown dependecies."""
         # Get the past unknown dependencies
         unknown_deps = self.get_past_unknown_deps()
+        ingestion_report = {}
 
         # Check for the known one's among those
-        ingestion_report = {'date': unknown_deps['date']}
         for eco, deps in unknown_deps.items():
             ingestion_report[eco] = find_ingested_epv(eco, deps)
 
