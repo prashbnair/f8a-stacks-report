@@ -93,6 +93,7 @@ class SentryReportHelper:
     def retrieve_events(self, issue_id):
         """Retrieve results for issue events."""
         events = {'stacktrace': ''}
+        output = {}
 
         try:
             # Invoke Sentry API to run the event collection
@@ -138,4 +139,6 @@ class SentryReportHelper:
             logger.error('Key not found while parsing. Reason: %r' % e)
         except IndexError as e:
             logger.error('Index not found while parsing. Reason: %r' % e)
+        except NameError as e:
+            logger.error('Name not found while parsing. Reason: %r' % e)
         return events
