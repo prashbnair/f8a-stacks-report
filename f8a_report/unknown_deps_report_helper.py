@@ -30,11 +30,12 @@ class UnknownDepsReportHelper:
         unknown_deps_list = {}
         for eco in ecosystem_list:
             deps = []
-            unknown_deps = result.get('stacks_summary', {}).get(eco, {}).\
-                get('unique_unknown_dependencies_with_frequency', {})
-            for k, v in unknown_deps.items():
-                pkg, ver = k.split()[0], k.split()[1]
-                deps.append({'name': pkg, 'version': ver})
+            if result:
+                unknown_deps = result.get('stacks_summary', {}).get(eco, {}).\
+                    get('unique_unknown_dependencies_with_frequency', {})
+                for k, v in unknown_deps.items():
+                    pkg, ver = k.split()[0], k.split()[1]
+                    deps.append({'name': pkg, 'version': ver})
             unknown_deps_list[eco] = deps
 
         return unknown_deps_list
@@ -48,6 +49,5 @@ class UnknownDepsReportHelper:
         # Check for the known one's among those
         for eco, deps in unknown_deps.items():
             ingestion_report[eco] = find_ingested_epv(eco, deps)
-
         # Report the ingested repositories
         return ingestion_report
