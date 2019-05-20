@@ -1,6 +1,7 @@
 """Various utility functions used across the repo."""
 
 import os
+import datetime
 import json
 import logging
 import psycopg2
@@ -680,7 +681,12 @@ class ReportHelper:
         ids = self.retrieve_stack_analyses_ids(start_date, end_date)
         ingestion_results = False
         if frequency == 'daily':
+            start = datetime.datetime.now()
             result = self.retrieve_ingestion_results(start_date, end_date)
+            elapsed_seconds = (datetime.datetime.now() - start).total_seconds()
+            logger.info(
+                "It took {t} seconds to generate ingestion report.".format(
+                    t=elapsed_seconds))
             if result['ingestion_details'] != {}:
                 ingestion_results = True
             else:

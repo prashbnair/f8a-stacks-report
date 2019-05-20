@@ -14,7 +14,7 @@ GREMLIN_SERVER_URL_REST = "http://{host}:{port}".format(
     host=os.environ.get("BAYESIAN_GREMLIN_HTTP_SERVICE_HOST", "localhost"),
     port=os.environ.get("BAYESIAN_GREMLIN_HTTP_SERVICE_PORT", "8182"))
 
-GREMLIN_QUERY_SIZE = int(os.getenv('GREMLIN_QUERY_SIZE', 50))
+GREMLIN_QUERY_SIZE = int(os.getenv('GREMLIN_QUERY_SIZE', 25))
 
 
 def generate_report_for_cves(cve_data):
@@ -173,7 +173,7 @@ def execute_gremlin_dsl(payload, url=GREMLIN_SERVER_URL_REST):
         return None
 
 
-def get_session_retry(retries=3, backoff_factor=0.2, status_forcelist=(404, 500, 502, 504),
+def get_session_retry(retries=5, backoff_factor=1.0, status_forcelist=(404, 500, 502, 504),
                       session=None):
     """Set HTTP Adapter with retries to session."""
     session = session or requests.Session()
