@@ -1,0 +1,39 @@
+{
+    "requestId": "197b5245-c8ab-4419-b423-c42294e785e5",
+    "status": {
+        "message": "",
+        "code": 200,
+        "attributes": {}
+    },
+    "result": {
+        "data": [
+            {
+                "cve_id": [
+                    "CVE-2017-1000116"
+                ],
+                "cecosystem": [
+                    "pypi"
+                ],
+                "cvss_v2": [
+                    10
+                ],
+                "nvd_status": [
+                    "ANALYZED"
+                ],
+                "vertex_label": [
+                    "CVE"
+                ],
+                "fixed_in": [
+                    ">=4.3-rc"
+                ],
+                "description": [
+                    "Mercurial prior to 4.3 did not adequately sanitize hostnames passed to ssh, leading to possible shell-injection attacks.\n"
+                ],
+                "modified_date": [
+                    "20190514"
+                ]
+            }
+        ],
+        "meta": {}
+    }
+}
