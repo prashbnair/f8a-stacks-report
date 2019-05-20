@@ -31,7 +31,9 @@ def main():
         last_day_of_prev_month = date(today.year, today.month, 1) - timedelta(days=1)
         last_month_first_date = last_day_of_prev_month.strftime('%Y-%m-01')
         last_month_end_date = last_day_of_prev_month.strftime('%Y-%m-%d')
-        response = r.get_report(last_month_first_date, last_month_end_date, 'monthly')
+        response, ingestion_results = r.get_report(last_month_first_date,
+                                                   last_month_end_date,
+                                                   'monthly')
         logger.debug('Monthly report data from {s} to {e}'.format(s=start_date, e=end_date))
         logger.debug(json.dumps(response, indent=2))
 
