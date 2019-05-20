@@ -22,3 +22,4 @@ s3transfer==0.2.0         # via boto3
 six==1.12.0               # via python-dateutil
 urllib3==1.24.1           # via botocore, requests
 zope.interface==4.6.0     # via datetime
+responses==0.10.6
