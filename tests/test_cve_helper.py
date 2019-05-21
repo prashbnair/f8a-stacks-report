@@ -4,6 +4,7 @@ import json
 from unittest import mock
 from f8a_report.cve_helper import CVE
 from datetime import datetime as dt
+from requests.exceptions import Timeout
 
 cve = CVE()
 cve_stats = {"github_stats": {"open_count": {}}}
@@ -84,23 +85,27 @@ def test_get_cveids_from_cvedb_prs(_mock1):
         assert cve_prs is None
 
 
-@mock.patch('requests.post', side_effect=mock_graph_post)
+@mock.patch('requests.Session.post')
 def test_validate_cveids_in_graph(_mock1):
-    """Test valid graph response."""
+    """Test valid and invalid graph responses."""
+    # Test a valid use-case
+    _mock1.side_effect = mock_graph_post
     ingested, missed = cve.validate_cveids_in_graph(cve_ids=['CVE-2017-1000116'])
-
     assert len(missed) == 0
     assert ingested is not None
     assert len(ingested) == 1
 
+    # Test an invalid status-code 500 use-case
+    _mock1.side_effect = mock_graph_post_error
+    ingested, missed = cve.validate_cveids_in_graph(cve_ids=['CVE-2017-1000116'])
+    assert len(missed) == 0
+    assert len(ingested) == 0
 
-@mock.patch('requests.post', side_effect=mock_graph_post_error)
-def test_invalidate_cveids_in_graph(_mock1):
-    """Test invalid graph response."""
-    with pytest.raises(ValueError):
-        ingested, missed = cve.validate_cveids_in_graph(cve_ids=['CVE-2017-1000116'])
-        assert len(missed) == 0
-        assert len(ingested) == 0
+    # Test a requests timeout use-case
+    _mock1.side_effect = Timeout
+    ingested, missed = cve.validate_cveids_in_graph(cve_ids=['CVE-2017-1000116'])
+    assert len(missed) == 0
+    assert len(ingested) == 0
 
 
 @mock.patch('f8a_report.cve_helper.CVE.call_github_api')
@@ -116,16 +121,25 @@ def test_get_fp_cves_count(_mock1):
         assert fp_cves_count is None
 
 
-@mock.patch('requests.get', side_effect=mock_github_get)
+@mock.patch('requests.get')
 def test_call_github_api(_mock1):
     """Test call github api."""
+    # Test valid response from github
+    _mock1.side_effect = mock_github_get
     gh_resp = cve.call_github_api('')
     assert gh_resp is not None
 
+    # Tests a requests timeout exception
+    _mock1.side_effect = Timeout
+    with pytest.raises(ValueError):
+        cve.call_github_api('')
 
-@mock.patch('f8a_report.cve_helper.CVE.call_github_api', return_value=github_api_response)
+
+@mock.patch('f8a_report.cve_helper.CVE.call_github_api')
 def test_get_open_cves_count(_mock1):
     """Test open CVEs count."""
+    # Test a valid test case
+    _mock1.return_value = github_api_response
     cve_stat = cve.get_open_cves_count(updated_on=dt.today().strftime('%Y-%m-%d'))
     assert cve_stat is not None
 

@@ -4,7 +4,7 @@ import time
 import logging
 from datetime import datetime as dt
 from datetime import timedelta
-from graph_report_generator import GREMLIN_SERVER_URL_REST
+from graph_report_generator import get_session_retry, GREMLIN_SERVER_URL_REST
 
 logger = logging.getLogger(__file__)
 
@@ -15,7 +15,6 @@ class CVE(object):
     def __init__(self):
         """Initialise CVE class."""
         self.github_url = 'https://api.github.com/search/issues?q=repo:codeready-analytics/cvedb'
-        self.gremlin_url = GREMLIN_SERVER_URL_REST
         self.github_rate_limits = 100
         self.github_rate_limit_reset = -1
 
@@ -38,6 +37,7 @@ class CVE(object):
                     if cve_id.startswith('CVE'):
                         cve_ids.add(cve_id)
 
+            logger.info("List of CVE-IDS picked from CVEDB PRs are %r" % cve_ids)
             return list(cve_ids)
 
         except (ValueError, TypeError) as e:
@@ -47,26 +47,32 @@ class CVE(object):
         """Identify CVEs ingested to graph or missed being ingested."""
         ingested = []
         missed = []
+        assert isinstance(cve_ids, list)
         # Check whether CVE node is present in graph or not
         try:
             for cve_id in cve_ids:
                 gremlin_query = "g.V().has('cve_id', '{}').valueMap();".format(cve_id)
                 payload = {'gremlin': gremlin_query}
-                resp = requests.post(url=self.gremlin_url, json=payload)
-                graph_resp = resp.json()
-                if resp.status_code == 200:
-                    if graph_resp.get('result', {}).get('data', []):
-                        ingested.append(cve_id)
+                try:
+                    resp = get_session_retry().post(url=GREMLIN_SERVER_URL_REST, json=payload)
+                    if resp.status_code == 200:
+                        graph_resp = resp.json()
+                        if graph_resp.get('result', {}).get('data', []):
+                            ingested.append(cve_id)
+                        else:
+                            missed.append(cve_id)
                     else:
-                        missed.append(cve_id)
-                else:
-                    msg = "Error - CVEGraphValidation failed for CVE: {} with error: {}".format(
-                            cve_id, graph_resp)
-                    raise ValueError(msg)
+                        msg = "Error - CVEGraphValidation failed for CVE: {} with error: {}".format(
+                                cve_id, resp.status_code)
+                        logger.error(msg)
+                except (requests.exceptions.ConnectionError, requests.exceptions.Timeout,
+                        requests.exceptions.RequestException) as e:
+                    logger.error('Error Connecting to Graph Instance : %r' % e)
+                    continue
 
             return ingested, missed
 
-        except (ValueError, TypeError, requests.exceptions.ConnectionError) as e:
+        except (ValueError, AssertionError) as e:
             raise ValueError('%r' % e)
 
     def get_fp_cves_count(self, updated_on):
@@ -96,7 +102,8 @@ class CVE(object):
 
             return resp.json() or None
 
-        except (ValueError, TypeError, requests.exceptions.ConnectionError) as e:
+        except (ValueError, requests.exceptions.ConnectionError,
+                requests.exceptions.Timeout, requests.exceptions.RequestException) as e:
             logger.error("Error fetching via github API for query: {}".format(query))
             raise ValueError('%r' % e)
 
@@ -113,7 +120,9 @@ class CVE(object):
                     "%Y-%m-%d")
                 query = '+type:pr+is:open+created:{}..{}'.format(start_date, end_date)
                 cve_json = self.call_github_api(query=query)
-                cve_stats['github_stats']['open_count'][open_key] = cve_json.get('total_count', -1)
+                if cve_json and isinstance(cve_json, dict):
+                    cve_stats['github_stats']['open_count'][open_key] = \
+                        cve_json.get('total_count', -1)
 
             return cve_stats
 
