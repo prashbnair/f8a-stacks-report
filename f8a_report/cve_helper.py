@@ -128,7 +128,6 @@ class CVE(object):
                 continue
         return cve_stats
 
-
     def generate_cve_report(self, updated_on):
         """Generate CVE statistics and CVE ingestion report."""
         try:

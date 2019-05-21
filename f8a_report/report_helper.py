@@ -17,6 +17,7 @@ from graph_report_generator import generate_report_for_unknown_epvs, \
     generate_report_for_latest_version
 from s3_helper import S3Helper
 from unknown_deps_report_helper import UnknownDepsReportHelper
+from sentry_report_helper import SentryReportHelper
 from cve_helper import CVE
 
 logger = logging.getLogger(__file__)

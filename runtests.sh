@@ -36,7 +36,7 @@ check_python_version
 function start_postgres {
     #pushd local-setup/
     echo "Invoke Docker Compose services"
-    docker-compose -f docker-compose.yml up  --force-recreate -d
+    docker-compose -f docker-compose.yml up  -d
     #popd
 }
 
@@ -85,7 +85,7 @@ pip3 install git+https://github.com/fabric8-analytics/fabric8-analytics-utils.gi
 pip3 install git+https://git@github.com/fabric8-analytics/fabric8-analytics-version-comparator.git#egg=f8a_version_comparator
 pip3 install "$(pwd)/."
 
-python3 "$(which pytest)" --cov=f8a_report/ --cov-report term-missing --cov-fail-under=$COVERAGE_THRESHOLD -vv tests
+python3 "$(which pytest)" -s --cov=f8a_report/ --cov-report term-missing --cov-fail-under=$COVERAGE_THRESHOLD -vv tests
 
 codecov --token=d6bd6983-0bad-4eed-b8e3-9fd1d5199257
 printf "%stests passed%s\n\n" "${GREEN}" "${NORMAL}"
