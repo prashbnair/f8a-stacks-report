@@ -47,6 +47,7 @@ class ReportHelper:
         self.conn = self.pg.conn
         self.cursor = self.pg.cursor
         self.unknown_deps_helper = UnknownDepsReportHelper()
+        self.sentry_helper = SentryReportHelper()
         self.npm_model_bucket = os.getenv('NPM_MODEL_BUCKET', 'cvae-insights')
         self.maven_model_bucket = os.getenv('MAVEN_MODEL_BUCKET', 'hpf-insights')
         self.pypi_model_bucket = os.getenv('PYPI_MODEL_BUCKET', 'hpf-insights')
@@ -692,6 +693,10 @@ class ReportHelper:
                 ingestion_results = True
             else:
                 ingestion_results = False
+
+            result = self.sentry_helper.retrieve_sentry_logs(start_date, end_date)
+            if not result:
+                logger.error('No Sentry Error Logs found in last 24 hours')
 
         if len(ids) > 0:
             worker_result = self.retrieve_worker_results(
