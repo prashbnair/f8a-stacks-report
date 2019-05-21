@@ -112,22 +112,22 @@ class CVE(object):
         cve_stats = {"github_stats": {"open_count": {}}}
         end_date = (dt.strptime(updated_on, "%Y-%m-%d") - timedelta(days=1)).strftime(
                     "%Y-%m-%d")
-        try:
-            # Create a query to fetch PRs not acted for more than xx days
-            for day in [2, 7, 30, 365]:
-                open_key = str(day) + " days"
-                start_date = (dt.strptime(updated_on, "%Y-%m-%d") - timedelta(days=day)).strftime(
-                    "%Y-%m-%d")
-                query = '+type:pr+is:open+created:{}..{}'.format(start_date, end_date)
+        # Create a query to fetch PRs not acted for more than xx days
+        for day in [2, 7, 30, 365]:
+            open_key = str(day) + " days"
+            start_date = (dt.strptime(updated_on, "%Y-%m-%d") - timedelta(days=day)).strftime(
+                "%Y-%m-%d")
+            query = '+type:pr+is:open+created:{}..{}'.format(start_date, end_date)
+            try:
                 cve_json = self.call_github_api(query=query)
                 if cve_json and isinstance(cve_json, dict):
                     cve_stats['github_stats']['open_count'][open_key] = \
                         cve_json.get('total_count', -1)
+            except (ValueError, TypeError) as e:
+                logger.error('%r' % e)
+                continue
+        return cve_stats
 
-            return cve_stats
-
-        except (ValueError, TypeError) as e:
-            raise ValueError('%r' % e)
 
     def generate_cve_report(self, updated_on):
         """Generate CVE statistics and CVE ingestion report."""
