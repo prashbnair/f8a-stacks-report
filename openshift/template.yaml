@@ -31,6 +31,8 @@ objects:
                   value: bayesian-gremlin-http
                 - name: BAYESIAN_GREMLIN_HTTP_SERVICE_PORT
                   value: "8182"
+                - name: GITHUB_CVE_REPO
+                  value: ${GITHUB_CVE_REPO}
                 - name: AWS_S3_SECRET_ACCESS_KEY
                   valueFrom:
                     secretKeyRef:
@@ -196,3 +198,9 @@ parameters:
   required: true
   name: MAVEN_TRAINING_REPO
   value: "https://github.com/fabric8-analytics/f8a-hpf-insights"
+
+- description: "Github Repo to fetch CVE PRs from"
+  displayName: Github CVE Repo
+  required: true
+  name: GITHUB_CVE_REPO
+  value: "fabric8-analytics"
