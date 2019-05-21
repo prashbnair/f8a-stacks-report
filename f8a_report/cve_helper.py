@@ -1,6 +1,7 @@
 """CVE Module to generate CVE Report."""
 import requests
 import time
+import os
 import logging
 from datetime import datetime as dt
 from datetime import timedelta
@@ -14,7 +15,10 @@ class CVE(object):
 
     def __init__(self):
         """Initialise CVE class."""
-        self.github_url = 'https://api.github.com/search/issues?q=repo:codeready-analytics/cvedb'
+        self.repo_name = os.environ.get('GITHUB_CVE_REPO', 'fabric8-analytics')
+        self.github_url = 'https://api.github.com/search/issues?q=repo:{}/cvedb'.format(
+            self.repo_name
+        )
         self.github_rate_limits = 100
         self.github_rate_limit_reset = -1
 
