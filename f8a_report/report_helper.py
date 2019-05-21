@@ -18,6 +18,7 @@ from graph_report_generator import generate_report_for_unknown_epvs, \
 from s3_helper import S3Helper
 from unknown_deps_report_helper import UnknownDepsReportHelper
 from sentry_report_helper import SentryReportHelper
+from cve_helper import CVE
 
 logger = logging.getLogger(__file__)
 
@@ -464,6 +465,7 @@ class ReportHelper:
                     self.populate_key_count(all_cve_list),
                 'total_average_response_time':
                     '{} ms'.format(total_response_time['all'] / len(template['stacks_details'])),
+                'cve_report': CVE().generate_cve_report(updated_on=start_date)
             }
             self.save_result(frequency, report_name, template)
             return template

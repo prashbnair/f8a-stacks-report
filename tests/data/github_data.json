@@ -1,0 +1,57 @@
+{
+    "total_count": 1,
+    "incomplete_results": false,
+    "items": [
+        {
+            "url": "https://api.github.com/repos/fabric8-analytics/cvedb/issues/3340",
+            "repository_url": "https://api.github.com/repos/fabric8-analytics/cvedb",
+            "labels_url": "https://api.github.com/repos/fabric8-analytics/cvedb/issues/3340/labels{/name}",
+            "comments_url": "https://api.github.com/repos/fabric8-analytics/cvedb/issues/3340/comments",
+            "events_url": "https://api.github.com/repos/fabric8-analytics/cvedb/issues/3340/events",
+            "html_url": "https://github.com/fabric8-analytics/cvedb/pull/3340",
+            "id": 442952571,
+            "node_id": "MDExOlB1bGxSZXF1ZXN0Mjc3OTU0NjAy",
+            "number": 3340,
+            "title": "[python] Add CVE-2017-1000115",
+            "user": {
+                "login": "fabric8-analytics-cve-bot",
+                "id": 48244656,
+                "node_id": "MDQ6VXNlcjQ4MjQ0NjU2",
+                "avatar_url": "https://avatars0.githubusercontent.com/u/48244656?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/fabric8-analytics-cve-bot",
+                "html_url": "https://github.com/fabric8-analytics-cve-bot",
+                "followers_url": "https://api.github.com/users/fabric8-analytics-cve-bot/followers",
+                "following_url": "https://api.github.com/users/fabric8-analytics-cve-bot/following{/other_user}",
+                "gists_url": "https://api.github.com/users/fabric8-analytics-cve-bot/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/fabric8-analytics-cve-bot/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/fabric8-analytics-cve-bot/subscriptions",
+                "organizations_url": "https://api.github.com/users/fabric8-analytics-cve-bot/orgs",
+                "repos_url": "https://api.github.com/users/fabric8-analytics-cve-bot/repos",
+                "events_url": "https://api.github.com/users/fabric8-analytics-cve-bot/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/fabric8-analytics-cve-bot/received_events",
+                "type": "User",
+                "site_admin": false
+            },
+            "labels": [],
+            "state": "closed",
+            "locked": false,
+            "assignee": null,
+            "assignees": [],
+            "milestone": null,
+            "comments": 0,
+            "created_at": "2019-05-11T04:28:32Z",
+            "updated_at": "2019-05-14T13:46:30Z",
+            "closed_at": "2019-05-14T13:46:30Z",
+            "author_association": "COLLABORATOR",
+            "pull_request": {
+                "url": "https://api.github.com/repos/fabric8-analytics/cvedb/pulls/3340",
+                "html_url": "https://github.com/fabric8-analytics/cvedb/pull/3340",
+                "diff_url": "https://github.com/fabric8-analytics/cvedb/pull/3340.diff",
+                "patch_url": "https://github.com/fabric8-analytics/cvedb/pull/3340.patch"
+            },
+            "body": "",
+            "score": 1
+        }
+    ]
+}
