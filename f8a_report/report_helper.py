@@ -519,6 +519,7 @@ class ReportHelper:
         template['ingestion_summary']['unknown_deps'] = {}
         count = {}
         latest_epvs = []
+        checked_pkgs = []
         for epv in epvs:
             eco = epv['ecosystem']
             pkg = epv['name']
@@ -542,7 +543,9 @@ class ReportHelper:
             # check if the package is publicly available
             if actual_latest_ver:
                 known_latest_ver = pkg_data['known_latest_version']
-                if actual_latest_ver != known_latest_ver:
+                if actual_latest_ver != known_latest_ver and (eco + "@DELIM@" + pkg
+                                                              not in checked_pkgs):
+                    checked_pkgs.append(eco + "@DELIM@" + pkg)
                     tmp = {
                         "package": pkg,
                         "actual_latest_version": actual_latest_ver,

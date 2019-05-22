@@ -26,6 +26,7 @@ objects:
             containers:
             - name: f8a-stacks-report
               image: "${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${IMAGE_TAG}"
+              imagePullPolicy: Always
               env:
                 - name: BAYESIAN_GREMLIN_HTTP_SERVICE_HOST
                   value: bayesian-gremlin-http
