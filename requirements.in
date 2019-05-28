@@ -2,3 +2,4 @@ psycopg2
 datetime
 boto3
 codecov
+requests-futures

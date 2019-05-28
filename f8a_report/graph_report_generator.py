@@ -7,6 +7,7 @@ import requests
 import traceback
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
+from requests_futures.sessions import FuturesSession
 
 _logger = logging.getLogger(__name__)
 
@@ -15,6 +16,32 @@ GREMLIN_SERVER_URL_REST = "http://{host}:{port}".format(
     port=os.environ.get("BAYESIAN_GREMLIN_HTTP_SERVICE_PORT", "8182"))
 
 GREMLIN_QUERY_SIZE = int(os.getenv('GREMLIN_QUERY_SIZE', 25))
+
+_SERVICE_HOST = os.environ.get("BAYESIAN_DATA_IMPORTER_SERVICE_HOST", "bayesian-data-importer")
+_SERVICE_PORT = os.environ.get("BAYESIAN_DATA_IMPORTER_SERVICE_PORT", "9192")
+_SYNC_ENDPOINT = "api/v1/sync_latest_version"
+_SYNC_API_URL = "http://{host}:{port}/{endpoint}".format(host=_SERVICE_HOST,
+                                                         port=_SERVICE_PORT,
+                                                         endpoint=_SYNC_ENDPOINT)
+_session = FuturesSession(max_workers=3)
+
+
+def rectify_latest_version(incorrect_list, eco):
+    """Function to rectify the latest version in graph."""
+    deps = []
+    for incorrect_data in incorrect_list:
+        tmp = {
+            "ecosystem": eco,
+            "name": incorrect_data['package'],
+            "actual_latest_version": incorrect_data['actual_latest_version']
+        }
+        deps.append(tmp)
+
+    try:
+        _session.post(_SYNC_API_URL, json=deps)
+        return "Success"
+    except Exception:
+        _logger.error(traceback.format_exc())
 
 
 def generate_report_for_cves(cve_data):
