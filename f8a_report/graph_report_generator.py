@@ -27,7 +27,7 @@ _session = FuturesSession(max_workers=3)
 
 
 def rectify_latest_version(incorrect_list, eco):
-    """Function to rectify the latest version in graph."""
+    """Rectify the latest version in graph."""
     deps = []
     for incorrect_data in incorrect_list:
         tmp = {
