@@ -14,7 +14,7 @@ from datetime import datetime as dt
 from psycopg2 import sql
 from collections import Counter
 from graph_report_generator import generate_report_for_unknown_epvs, \
-    generate_report_for_latest_version
+    generate_report_for_latest_version, rectify_latest_version
 from s3_helper import S3Helper
 from unknown_deps_report_helper import UnknownDepsReportHelper
 from sentry_report_helper import SentryReportHelper
@@ -580,6 +580,26 @@ class ReportHelper:
                 # Mark the package as private as the information is not present publicly
                 template['ingestion_details'][eco][pkg]['private_pkg'] = "true"
 
+        # For each ecosystem, calculate the %age accuracy
+        for eco in count:
+            correct = count[eco]['correct_latest_versions']
+            incorrect = count[eco]['incorrect_latest_versions']
+            # Calculate the %age of latest version accuracy
+            if correct != 0 or incorrect != 0:
+                count[eco]['latest_version_accuracy'] = round(((correct * 100) /
+                                                               (correct + incorrect)), 2)
+
+            correct = count[eco]['ingested_in_graph']
+            incorrect = count[eco]['not_ingested_in_graph']
+            # Calculate the %age of successful ingestion
+            if correct != 0 or incorrect != 0:
+                count[eco]['ingestion_accuracy'] = round(((correct * 100) /
+                                                          (correct + incorrect)), 2)
+
+            # Rectify the latest versions only if present
+            if count[eco]['incorrect_latest_versions'] != 0:
+                summary = template['ingestion_summary']
+                rectify_latest_version(summary['incorrect_latest_version'][eco], eco)
         template['ingestion_summary']['stats'] = count
         return template, latest_epvs
 

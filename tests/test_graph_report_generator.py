@@ -2,7 +2,7 @@
 
 from f8a_report.graph_report_generator import execute_gremlin_dsl, \
     generate_report_for_unknown_epvs, generate_report_for_latest_version, \
-    generate_report_for_cves, find_ingested_epv
+    generate_report_for_cves, find_ingested_epv, rectify_latest_version
 from unittest import mock
 
 
@@ -204,3 +204,15 @@ def test_find_ingested_epv(mocker):
     assert out['ingested_dependencies'] == 1
     assert out['report']['lodash 2.40.1'] == 'Unknown'
     assert out['report']['serve-static 1.7.1'] == 'Ingested'
+
+
+def test_rectify_latest_version():
+    """Test the function rectify_latest_version."""
+    lst = [
+        {
+            "package": "io.vertx:vertx-web",
+            "actual_latest_version": "3.7.9"
+        }
+    ]
+    resp = rectify_latest_version(lst, "maven")
+    assert resp == "Success"
