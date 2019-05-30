@@ -26,15 +26,22 @@ _SYNC_API_URL = "http://{host}:{port}/{endpoint}".format(host=_SERVICE_HOST,
 _session = FuturesSession(max_workers=3)
 
 
-def rectify_latest_version(incorrect_list, eco):
+def rectify_latest_version(incorrect_list, eco, stack_flow=False):
     """Rectify the latest version in graph."""
     deps = []
     for incorrect_data in incorrect_list:
-        tmp = {
-            "ecosystem": eco,
-            "name": incorrect_data['package'],
-            "actual_latest_version": incorrect_data['actual_latest_version']
-        }
+        if stack_flow:
+            pkg = incorrect_data.split(" ")[0]
+            tmp = {
+                "ecosystem": eco,
+                "name": pkg
+            }
+        else:
+            tmp = {
+                "ecosystem": eco,
+                "name": incorrect_data['package'],
+                "actual_latest_version": incorrect_data['actual_latest_version']
+            }
         deps.append(tmp)
 
     try:
