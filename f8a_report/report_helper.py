@@ -268,12 +268,13 @@ class ReportHelper:
                               unique_stacks_with_recurrence_count, unique_stacks_with_deps_count,
                               avg_response_time, unknown_deps_ingestion_report):
         """Generate ecosystem specific stack summary."""
+        unique_dep_frequency = self.populate_key_count(self.flatten_list(all_deps[ecosystem]))
+        rectify_latest_version(unique_dep_frequency, ecosystem, True)
         return {
             'stack_requests_count': total_stack_requests[ecosystem],
             'unique_dependencies_with_frequency':
             self.populate_key_count(self.flatten_list(all_deps[ecosystem])),
-            'unique_unknown_dependencies_with_frequency':
-            self.populate_key_count(self.flatten_list(all_unknown_deps[ecosystem])),
+            'unique_unknown_dependencies_with_frequency': unique_dep_frequency,
             'unique_stacks_with_frequency': unique_stacks_with_recurrence_count[ecosystem],
             'unique_stacks_with_deps_count': unique_stacks_with_deps_count[ecosystem],
             'average_response_time': '{} ms'.format(avg_response_time[ecosystem]),

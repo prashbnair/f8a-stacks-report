@@ -216,3 +216,10 @@ def test_rectify_latest_version():
     ]
     resp = rectify_latest_version(lst, "maven")
     assert resp == "Success"
+
+
+def test_rectify_latest_version2():
+    """Test the function rectify_latest_version."""
+    lst = {'express 4.0.0': 2, 'npm 6.2.0': 2, 'serve-static 1.7.1': 2}
+    resp = rectify_latest_version(lst, "npm", True)
+    assert resp == "Success"
