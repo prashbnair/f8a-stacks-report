@@ -17,7 +17,8 @@ class S3Helper:
         self.region_name = os.environ.get('AWS_S3_REGION') or 'us-east-1'
         self.aws_s3_access_key = os.environ.get('AWS_S3_ACCESS_KEY_ID')
         self.aws_s3_secret_access_key = os.environ.get('AWS_S3_SECRET_ACCESS_KEY')
-        self.deployment_prefix = os.environ.get('DEPLOYMENT_PREFIX').lower() or 'dev'
+        self.deployment_prefix = os.environ.get('DEPLOYMENT_PREFIX') or 'dev'
+        self.deployment_prefix = self.deployment_prefix.lower()
         self.bucket_name = os.environ.get('REPORT_BUCKET_NAME')
         self.report_bucket_name = self.deployment_prefix + '-' + self.bucket_name
         if self.aws_s3_secret_access_key is None or self.aws_s3_access_key is None or\
