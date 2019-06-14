@@ -48,9 +48,9 @@ class ReportHelper:
         self.cursor = self.pg.cursor
         self.unknown_deps_helper = UnknownDepsReportHelper()
         self.sentry_helper = SentryReportHelper()
-        self.npm_model_bucket = os.getenv('NPM_MODEL_BUCKET', 'cvae-insights')
-        self.maven_model_bucket = os.getenv('MAVEN_MODEL_BUCKET', 'hpf-insights')
-        self.pypi_model_bucket = os.getenv('PYPI_MODEL_BUCKET', 'hpf-insights')
+        self.npm_model_bucket = os.getenv('NPM_MODEL_BUCKET', 'cvae-npm-insights')
+        self.maven_model_bucket = os.getenv('MAVEN_MODEL_BUCKET', 'hpf-maven-insights')
+        self.pypi_model_bucket = os.getenv('PYPI_MODEL_BUCKET', 'hpf-pypi-insights')
         self.golang_model_bucket = os.getenv('GOLANG_MODEL_BUCKET', 'golang-insights')
         self.maven_training_repo = os.getenv(
             'MAVEN_TRAINING_REPO', 'https://github.com/fabric8-analytics/f8a-hpf-insights')
@@ -146,8 +146,7 @@ class ReportHelper:
         result = {}
 
         # Get collated user input data
-        collated_user_input_obj_key = '{depl_prefix}/user-input-data/collated-{freq}.json'.format(
-            depl_prefix=self.s3.deployment_prefix, freq=frequency)
+        collated_user_input_obj_key = 'user-input-data/collated-{freq}.json'.format(freq=frequency)
         collated_user_input = self.s3.read_json_object(bucket_name=self.s3.report_bucket_name,
                                                        obj_key=collated_user_input_obj_key) or {}
 
@@ -163,8 +162,7 @@ class ReportHelper:
                                    obj_key=collated_user_input_obj_key)
 
         # Get collated big query data
-        collated_big_query_obj_key = '{depl_prefix}/big-query-data/collated.json'.format(
-            depl_prefix=self.s3.deployment_prefix)
+        collated_big_query_obj_key = 'big-query-data/collated.json'
         collated_big_query_data = self.s3.read_json_object(bucket_name=self.s3.report_bucket_name,
                                                            obj_key=collated_big_query_obj_key) or {}
 
@@ -232,16 +230,16 @@ class ReportHelper:
 
             # Get the bucket name based on ecosystems to store user-input stacks for retraining
             if eco == 'maven':
-                bucket_name = self.maven_model_bucket
+                bucket_name = self.s3.deployment_prefix + '-' + self.maven_model_bucket
                 github_repo = self.maven_training_repo
             elif eco == 'pypi':
-                bucket_name = self.pypi_model_bucket
+                bucket_name = self.s3.deployment_prefix + '-' + self.pypi_model_bucket
                 github_repo = self.pypi_training_repo
             elif eco == 'go':
-                bucket_name = self.golang_model_bucket
+                bucket_name = self.s3.deployment_prefix + '-' + self.golang_model_bucket
                 github_repo = self.golang_training_repo
             elif eco == 'npm':
-                bucket_name = self.npm_model_bucket
+                bucket_name = self.s3.deployment_prefix + '-' + self.npm_model_bucket
                 github_repo = self.npm_training_repo
             else:
                 continue
@@ -290,8 +288,8 @@ class ReportHelper:
     def save_result(self, frequency, report_name, template):
         """Save result in S3 bucket."""
         try:
-            obj_key = '{depl_prefix}/{freq}/{report_name}.json'.format(
-                depl_prefix=self.s3.deployment_prefix, freq=frequency, report_name=report_name
+            obj_key = '{freq}/{report_name}.json'.format(
+                freq=frequency, report_name=report_name
             )
             self.s3.store_json_content(content=template, obj_key=obj_key,
                                        bucket_name=self.s3.report_bucket_name)
@@ -693,8 +691,8 @@ class ReportHelper:
 
         # Saving the final report in the relevant S3 bucket
         try:
-            obj_key = '{depl_prefix}/{type}/epv/{report_name}.json'.format(
-                depl_prefix=self.s3.deployment_prefix, type=report_type, report_name=report_name
+            obj_key = '{type}/epv/{report_name}.json'.format(
+                type=report_type, report_name=report_name
             )
             self.s3.store_json_content(content=template, obj_key=obj_key,
                                        bucket_name=self.s3.report_bucket_name)

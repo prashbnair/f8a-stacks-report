@@ -19,9 +19,7 @@ class UnknownDepsReportHelper:
         past_date = (today - timedelta(days=1)).strftime('%Y-%m-%d')
 
         # Get the report of the previous date
-        past_obj_key = '{depl_prefix}/daily/{report_name}.json'.format(
-            depl_prefix=self.s3.deployment_prefix, report_name=past_date
-        )
+        past_obj_key = 'daily/{report_name}.json'.format(report_name=past_date)
         result = self.s3.read_json_object(bucket_name=self.s3.report_bucket_name,
                                           obj_key=past_obj_key)
 

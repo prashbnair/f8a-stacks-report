@@ -156,19 +156,19 @@ parameters:
   displayName: NPM Model Version
   required: true
   name: NPM_MODEL_BUCKET
-  value: "cvae-insights"
+  value: "cvae-npm-insights"
 
 - description: "Maven Model Bucket to put collated data"
   displayName: Maven Model Version
   required: true
   name: MAVEN_MODEL_BUCKET
-  value: "hpf-insights"
+  value: "hpf-maven-insights"
 
 - description: "Python Model Bucket to put collated data"
   displayName: Python Model Version
   required: true
   name: PYPI_MODEL_BUCKET
-  value: "hpf-insights"
+  value: "hpf-pypi-insights"
 
 - description: "Golang Model Bucket to put collated data"
   displayName: Golang Model Version
