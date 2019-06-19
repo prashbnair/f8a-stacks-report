@@ -48,10 +48,10 @@ class ReportHelper:
         self.cursor = self.pg.cursor
         self.unknown_deps_helper = UnknownDepsReportHelper()
         self.sentry_helper = SentryReportHelper()
-        self.npm_model_bucket = os.getenv('NPM_MODEL_BUCKET', 'cvae-npm-insights')
-        self.maven_model_bucket = os.getenv('MAVEN_MODEL_BUCKET', 'hpf-maven-insights')
-        self.pypi_model_bucket = os.getenv('PYPI_MODEL_BUCKET', 'hpf-pypi-insights')
-        self.golang_model_bucket = os.getenv('GOLANG_MODEL_BUCKET', 'golang-insights')
+        self.npm_model_bucket = os.getenv('NPM_MODEL_BUCKET')
+        self.maven_model_bucket = os.getenv('MAVEN_MODEL_BUCKET')
+        self.pypi_model_bucket = os.getenv('PYPI_MODEL_BUCKET')
+        self.golang_model_bucket = os.getenv('GOLANG_MODEL_BUCKET')
         self.maven_training_repo = os.getenv(
             'MAVEN_TRAINING_REPO', 'https://github.com/fabric8-analytics/f8a-hpf-insights')
         self.npm_training_repo = os.getenv(
@@ -225,21 +225,20 @@ class ReportHelper:
 
         for eco, stack_dict in result.items():
             training_data = self.get_training_data_for_ecosystem(eco, stack_dict)
-            obj_key = '{eco}/{depl_prefix}/{model_version}/data/manifest.json'.format(
-                eco=eco, depl_prefix=self.s3.deployment_prefix, model_version=model_version)
+            obj_key = '{model_version}/data/manifest.json'.format(model_version=model_version)
 
             # Get the bucket name based on ecosystems to store user-input stacks for retraining
             if eco == 'maven':
-                bucket_name = self.s3.deployment_prefix + '-' + self.maven_model_bucket
+                bucket_name = self.maven_model_bucket
                 github_repo = self.maven_training_repo
             elif eco == 'pypi':
-                bucket_name = self.s3.deployment_prefix + '-' + self.pypi_model_bucket
+                bucket_name = self.pypi_model_bucket
                 github_repo = self.pypi_training_repo
             elif eco == 'go':
-                bucket_name = self.s3.deployment_prefix + '-' + self.golang_model_bucket
+                bucket_name = self.golang_model_bucket
                 github_repo = self.golang_training_repo
             elif eco == 'npm':
-                bucket_name = self.s3.deployment_prefix + '-' + self.npm_model_bucket
+                bucket_name = self.npm_model_bucket
                 github_repo = self.npm_training_repo
             else:
                 continue

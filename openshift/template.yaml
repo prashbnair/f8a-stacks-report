@@ -44,6 +44,56 @@ objects:
                     secretKeyRef:
                       name: aws
                       key: s3-access-key-id
+                - name: AWS_S3_SECRET_ACCESS_KEY_REPORT_BUCKET
+                  valueFrom:
+                    secretKeyRef:
+                      name: developer-analytics-audit-report-s3
+                      key: aws_secret_access_key
+                - name: AWS_S3_ACCESS_KEY_ID_REPORT_BUCKET
+                  valueFrom:
+                    secretKeyRef:
+                      name: developer-analytics-audit-report-s3
+                      key: aws_access_key_id
+                - name: AWS_S3_SECRET_ACCESS_KEY_NPM_BUCKET
+                  valueFrom:
+                    secretKeyRef:
+                      name: cvae-npm-insights-s3
+                      key: aws_secret_access_key
+                - name: AWS_S3_ACCESS_KEY_ID_NPM_BUCKET
+                  valueFrom:
+                    secretKeyRef:
+                      name: cvae-npm-insights-s3
+                      key: aws_access_key_id
+                - name: AWS_S3_SECRET_ACCESS_KEY_MVN_BUCKET
+                  valueFrom:
+                    secretKeyRef:
+                      name: hpf-maven-insights-s3
+                      key: aws_secret_access_key
+                - name: AWS_S3_ACCESS_KEY_ID_MVN_BUCKET
+                  valueFrom:
+                    secretKeyRef:
+                      name: hpf-maven-insights-s3
+                      key: aws_access_key_id
+                - name: AWS_S3_SECRET_ACCESS_KEY_PYPI_BUCKET
+                  valueFrom:
+                    secretKeyRef:
+                      name: hpf-pypi-insights-s3
+                      key: aws_secret_access_key
+                - name: AWS_S3_ACCESS_KEY_ID_PYPI_BUCKET
+                  valueFrom:
+                    secretKeyRef:
+                      name: hpf-pypi-insights-s3
+                      key: aws_access_key_id
+                - name: AWS_S3_SECRET_ACCESS_KEY_GOLANG_BUCKET
+                  valueFrom:
+                    secretKeyRef:
+                      name: golang-insights-s3
+                      key: aws_secret_access_key
+                - name: AWS_S3_ACCESS_KEY_ID_GOLANG_BUCKET
+                  valueFrom:
+                    secretKeyRef:
+                      name: golang-insights-s3
+                      key: aws_access_key_id
                 - name: DEPLOYMENT_PREFIX
                   valueFrom:
                     configMapKeyRef:
@@ -77,15 +127,26 @@ objects:
                       name: worker
                       key: sentry-auth-token
                 - name: REPORT_BUCKET_NAME
-                  value: developer-analytics-audit-report
+                  valueFrom:
+                    secretKeyRef:
+                      name: developer-analytics-audit-report-s3
+                      key: bucket
                 - name: NPM_MODEL_BUCKET
-                  value: ${NPM_MODEL_BUCKET}
+                  secretKeyRef:
+                      name: cvae-npm-insights-s3
+                      key: bucket
                 - name: MAVEN_MODEL_BUCKET
-                  value: ${MAVEN_MODEL_BUCKET}
+                  secretKeyRef:
+                      name: hpf-maven-insights-s3
+                      key: bucket
                 - name: PYPI_MODEL_BUCKET
-                  value: ${PYPI_MODEL_BUCKET}
+                  secretKeyRef:
+                      name: hpf-pypi-insights-s3
+                      key: bucket
                 - name: GOLANG_MODEL_BUCKET
-                  value: ${GOLANG_MODEL_BUCKET}
+                  secretKeyRef:
+                      name: golang-insights-s3
+                      key: bucket
                 - name: GOLANG_TRAINING_REPO
                   value: ${GOLANG_TRAINING_REPO}
                 - name: MAVEN_TRAINING_REPO
@@ -151,30 +212,6 @@ parameters:
   required: true
   name: MEMORY_LIMIT
   value: "1024Mi"
-
-- description: "NPM Model Bucket to put collated data"
-  displayName: NPM Model Version
-  required: true
-  name: NPM_MODEL_BUCKET
-  value: "cvae-npm-insights"
-
-- description: "Maven Model Bucket to put collated data"
-  displayName: Maven Model Version
-  required: true
-  name: MAVEN_MODEL_BUCKET
-  value: "hpf-maven-insights"
-
-- description: "Python Model Bucket to put collated data"
-  displayName: Python Model Version
-  required: true
-  name: PYPI_MODEL_BUCKET
-  value: "hpf-pypi-insights"
-
-- description: "Golang Model Bucket to put collated data"
-  displayName: Golang Model Version
-  required: true
-  name: GOLANG_MODEL_BUCKET
-  value: "golang-insights"
 
 - description: "Golang Training Repo to fetch training file"
   displayName: Golang Training Repo
