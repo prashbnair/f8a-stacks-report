@@ -12,14 +12,17 @@ logger = logging.getLogger(__file__)
 class S3Helper:
     """Helper class for storing reports to S3."""
 
-    def __init__(self):
+    def __init__(self, aws_access_key_id=None, aws_secret_access_key=None, report_bucket=None):
         """Init method for the helper class."""
         self.region_name = os.environ.get('AWS_S3_REGION') or 'us-east-1'
-        self.aws_s3_access_key = os.environ.get('AWS_S3_ACCESS_KEY_ID')
-        self.aws_s3_secret_access_key = os.environ.get('AWS_S3_SECRET_ACCESS_KEY')
-        self.aws_s3_access_key_report_bucket = os.environ.get('AWS_S3_ACCESS_KEY_ID_REPORT_BUCKET')
+        self.aws_s3_access_key = os.environ.get('AWS_S3_ACCESS_KEY_ID') \
+            or aws_access_key_id
+        self.aws_s3_secret_access_key = os.environ.get('AWS_S3_SECRET_ACCESS_KEY') or \
+            aws_secret_access_key
+        self.aws_s3_access_key_report_bucket = report_bucket or \
+            os.environ.get('AWS_S3_ACCESS_KEY_ID_REPORT_BUCKET')
         self.aws_s3_secret_access_key_report_bucket = \
-            os.environ.get('AWS_S3_SECRET_ACCESS_KEY_REPORT_BUCKET')
+            os.environ.get('AWS_S3_SECRET_ACCESS_KEY_REPORT_BUCKET') or report_bucket
         self.aws_s3_access_key_npm_bucket = \
             os.environ.get('AWS_S3_ACCESS_KEY_ID_NPM_BUCKET')
         self.aws_s3_secret_access_key_npm_bucket = \
@@ -49,23 +52,23 @@ class S3Helper:
 
     def s3_client(self, bucket_name):
         """Provide s3 client for each bucket."""
-        if bucket_name == 'developer-analytics-audit-report-s3':
+        if bucket_name == os.environ.get('REPORT_BUCKET_NAME'):
             s3 = boto3.resource('s3', region_name=self.region_name,
                                 aws_access_key_id=self.aws_s3_access_key_report_bucket,
                                 aws_secret_access_key=self.aws_s3_secret_access_key_report_bucket)
-        elif bucket_name == 'hpf-pypi-insights-s3':
+        elif bucket_name == os.getenv('PYPI_MODEL_BUCKET'):
             s3 = boto3.resource('s3', region_name=self.region_name,
                                 aws_access_key_id=self.aws_s3_access_key_pypi_bucket,
                                 aws_secret_access_key=self.aws_s3_secret_access_key_pypi_bucket)
-        elif bucket_name == 'golang-insights-s3':
+        elif bucket_name == os.getenv('GOLANG_MODEL_BUCKET'):
             s3 = boto3.resource('s3', region_name=self.region_name,
                                 aws_access_key_id=self.aws_s3_access_key_golang_bucket,
                                 aws_secret_access_key=self.aws_s3_secret_access_key_golang_bucket)
-        elif bucket_name == 'hpf-maven-insights-s3':
+        elif bucket_name == os.getenv('MAVEN_MODEL_BUCKET'):
             s3 = boto3.resource('s3', region_name=self.region_name,
                                 aws_access_key_id=self.aws_s3_access_key_mvn_bucket,
                                 aws_secret_access_key=self.aws_s3_secret_access_key_mvn_bucket)
-        elif bucket_name == 'cvae-npm-insights-s3':
+        elif bucket_name == os.getenv('NPM_MODEL_BUCKET'):
             s3 = boto3.resource('s3', region_name=self.region_name,
                                 aws_access_key_id=self.aws_s3_access_key_npm_bucket,
                                 aws_secret_access_key=self.aws_s3_secret_access_key_npm_bucket)
