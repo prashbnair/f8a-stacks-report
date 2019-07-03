@@ -1,7 +1,7 @@
 FROM registry.centos.org/centos/centos:7
   
 ENV APP_DIR='/f8a_report' \
-    F8A_UTIL_VERSION=d6c3ac8
+    F8A_UTIL_VERSION=de8046b
 
 WORKDIR ${APP_DIR}
 
