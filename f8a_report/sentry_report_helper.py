@@ -80,8 +80,8 @@ class SentryReportHelper:
             # Saving the final report in the relevant S3 bucket
 
         try:
-            obj_key = '{depl_prefix}/{type}/{report_name}.json'.format(
-                depl_prefix=self.s3.deployment_prefix, type=report_type, report_name=report_name
+            obj_key = '{type}/{report_name}.json'.format(
+                type=report_type, report_name=report_name
             )
             self.s3.store_json_content(content=result, obj_key=obj_key,
                                        bucket_name=self.s3.report_bucket_name)

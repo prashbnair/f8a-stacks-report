@@ -239,11 +239,6 @@ def test_populate_key_count_failure():
         assert e.value == 'TypeError("unhashable type: \'list\'",)'
 
 
-def test_s3helper():
-    """Test the failure scenario of the __init__ method of the class S3Helper."""
-    assert s.s3 is not None
-
-
 @mock.patch('f8a_report.report_helper.S3Helper.store_json_content', return_value=True)
 def test_store_training_data(_mock1):
     """Test the success scenario for storing Retraining Data in their respective buckets."""
