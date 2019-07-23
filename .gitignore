@@ -15,3 +15,5 @@ metastore_db/
 html/
 
 .DS_Store
+*.log
+*.err
