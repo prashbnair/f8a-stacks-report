@@ -21,6 +21,7 @@ from sentry_report_helper import SentryReportHelper
 from cve_helper import CVE
 
 logger = logging.getLogger(__file__)
+logging.basicConfig(level=logging.INFO)
 
 
 class Postgres:
@@ -597,6 +598,8 @@ class ReportHelper:
             # Rectify the latest versions only if present
             if count[eco]['incorrect_latest_versions'] != 0:
                 summary = template['ingestion_summary']
+                logger.info("Information related to incorrect latest version --")
+                logger.info(summary['incorrect_latest_version'][eco])
                 rectify_latest_version(summary['incorrect_latest_version'][eco], eco)
         template['ingestion_summary']['stats'] = count
         return template, latest_epvs
@@ -657,6 +660,7 @@ class ReportHelper:
 
     def normalize_ingestion_data(self, start_date, end_date, ingestion_data, frequency='daily'):
         """Normalize worker data for reporting."""
+        logger.info("Normalize Ingestion Data started")
         report_type = 'ingestion-data'
         if frequency == 'monthly':
             report_name = dt.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m')
@@ -679,13 +683,16 @@ class ReportHelper:
         # Populate the default template with EPV info
         template, epvs = self.populate_default_information(epv_data, template)
 
+        logger.info("Fetching details of the latest version for the epvs")
         pkg_output = generate_report_for_latest_version(epvs)
+        logger.info("Fetching details of the unknown packages for the epvs")
         ver_output = generate_report_for_unknown_epvs(epvs)
 
         # Call the function to add the package information to the template
         template, latest_epvs = self.generate_results(epvs, template, pkg_output, ver_output)
 
         # Call the function to get the availability of latest node
+        logger.info("Checking if latest node exists in graph")
         template = self.check_latest_node(latest_epvs, template)
 
         # Saving the final report in the relevant S3 bucket

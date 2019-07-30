@@ -34,7 +34,13 @@ mock_false = {
 unknown_json = {
     "npm@DELIM@lodash@DELIM@4.17.11": "true",
     "npm@DELIM@jquery@DELIM@3.3.1": "false",
-    "npm@DELIM@jquery@DELIM@3.6.4": "false"
+    "npm@DELIM@jquery@DELIM@3.6.4": "false",
+    "maven@DELIM@dep1@DELIM@4.17.11": "true",
+    "maven@DELIM@dep2@DELIM@3.3.1": "false",
+    "pypi@DELIM@dep2@DELIM@3.3.2": "false",
+    "pypi@DELIM@dep1@DELIM@4.17.11": "true",
+    "pypi@DELIM@dep2@DELIM@3.3.1": "false",
+    "maven@DELIM@dep2@DELIM@3.6.4": "false"
 }
 
 latest_json = {
@@ -47,6 +53,30 @@ latest_json = {
     "npm@DELIM@lodash": {
         "ecosystem": "npm",
         "name": "lodash",
+        "known_latest_version": "4.17.11",
+        "actual_latest_version": "4.17.11"
+    },
+    "pypi@DELIM@dep2": {
+        "ecosystem": "pypi",
+        "name": "dep2",
+        "known_latest_version": "3.3.1",
+        "actual_latest_version": "3.3.2"
+    },
+    "pypi@DELIM@dep1": {
+        "ecosystem": "pypi",
+        "name": "dep1",
+        "known_latest_version": "4.17.11",
+        "actual_latest_version": "4.17.11"
+    },
+    "maven@DELIM@dep2": {
+        "ecosystem": "maven",
+        "name": "dep2",
+        "known_latest_version": "3.3.1",
+        "actual_latest_version": "3.6.4"
+    },
+    "maven@DELIM@dep1": {
+        "ecosystem": "maven",
+        "name": "dep1",
         "known_latest_version": "4.17.11",
         "actual_latest_version": "4.17.11"
     }
