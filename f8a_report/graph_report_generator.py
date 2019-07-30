@@ -10,6 +10,7 @@ from requests.packages.urllib3.util.retry import Retry
 from requests_futures.sessions import FuturesSession
 
 _logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 GREMLIN_SERVER_URL_REST = "http://{host}:{port}".format(
     host=os.environ.get("BAYESIAN_GREMLIN_HTTP_SERVICE_HOST", "localhost"),
@@ -29,6 +30,7 @@ _session = FuturesSession(max_workers=3)
 def rectify_latest_version(incorrect_list, eco, stack_flow=False):
     """Rectify the latest version in graph."""
     deps = []
+    _logger.info("Function called to rectify the latest version.Stack-Flow={}".format(stack_flow))
     for incorrect_data in incorrect_list:
         if stack_flow:
             pkg = incorrect_data.split(" ")[0]
@@ -45,6 +47,7 @@ def rectify_latest_version(incorrect_list, eco, stack_flow=False):
         deps.append(tmp)
 
     try:
+        _logger.info("Calling sync_latest_version API for the ecosystem {}".format(eco))
         _session.post(_SYNC_API_URL, json=deps)
         return "Success"
     except Exception:
