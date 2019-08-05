@@ -558,6 +558,10 @@ class ReportHelper:
                     = known_latest_ver
                 template['ingestion_details'][eco][pkg]['actual_latest_version'] \
                     = actual_latest_ver
+                non_cve_version = pkg_data.get('non_cve_version', '')
+                if non_cve_version:
+                    template['ingestion_details'][eco][pkg]['non_cve_version'] \
+                        = non_cve_version
                 latest_json = {
                     "ecosystem": eco,
                     "name": pkg,
