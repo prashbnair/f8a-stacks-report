@@ -46,8 +46,7 @@ def rectify_latest_version(incorrect_list, eco, stack_flow=False):
 
     try:
         _logger.info("Calling sync_latest_version API for the ecosystem {}".format(eco))
-        resp = requests.post(_SYNC_API_URL, json=deps)
-        # resp = _session.post(_SYNC_API_URL, json=deps)
+        resp = requests.post(_SYNC_API_URL, json=deps, timeout=1800)
         _logger.info("Response for the sync_latest_version API call.........")
         _logger.info(resp.json())
         return "Success"
