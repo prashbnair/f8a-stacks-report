@@ -194,8 +194,8 @@ class ReportHelper:
             else:
                 logger.error('Error received from EMR API for {eco} ecosystem \n {resp}'.format(
                     eco=ecosystem, resp=resp.json()))
-        except Exception:
-            logger.error('Failed to invoke EMR API for {eco} ecosystem'.format(eco=ecosystem))
+        except Exception as e:
+            logger.error('Failed to invoke EMR API for {eco}, error: %r'.format(eco=ecosystem) % e)
 
     def get_training_data_for_ecosystem(self, eco, stack_dict):
         """Get Training data for an ecosystem."""

@@ -28,7 +28,7 @@ class S3Helper:
         self.aws_s3_secret_access_key_npm_bucket = \
             os.environ.get('AWS_S3_SECRET_ACCESS_KEY_NPM_BUCKET')
         self.aws_s3_access_key_mvn_bucket = \
-            os.environ.get('AWS_S3_ACCESS_KEY_ID_KEY_MVN_BUCKET')
+            os.environ.get('AWS_S3_ACCESS_KEY_ID_MVN_BUCKET')
         self.aws_s3_secret_access_key_mvn_bucket = \
             os.environ.get('AWS_S3_SECRET_ACCESS_KEY_MVN_BUCKET')
         self.aws_s3_access_key_pypi_bucket = \
