@@ -183,6 +183,10 @@ class ReportHelper:
             'data_version': data_version
         }
 
+        logger.info('bucket_name for {eco}: {buck}'.format(eco=ecosystem, buck=bucket_name))
+        logger.info('github_repo for {eco}: {git}'.format(eco=ecosystem, git=github_repo))
+        logger.info('data_version for {eco}: {data}'.format(eco=ecosystem, data=data_version))
+
         try:
             # Invoke EMR API to run the retraining
             resp = requests.post(url=self.emr_api + '/api/v1/runjob', json=payload)
