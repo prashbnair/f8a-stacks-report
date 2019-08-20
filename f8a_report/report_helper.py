@@ -232,15 +232,19 @@ class ReportHelper:
             if eco == 'maven':
                 bucket_name = self.maven_model_bucket
                 github_repo = self.maven_training_repo
+                logger.info('maven bucket name is: {bucket}'.format(bucket=bucket_name))
             elif eco == 'pypi':
                 bucket_name = self.pypi_model_bucket
                 github_repo = self.pypi_training_repo
+                logger.info('pypi bucket name is: {bucket}'.format(bucket=bucket_name))
             elif eco == 'go':
                 bucket_name = self.golang_model_bucket
                 github_repo = self.golang_training_repo
+                logger.info('go bucket name is: {bucket}'.format(bucket=bucket_name))
             elif eco == 'npm':
                 bucket_name = self.npm_model_bucket
                 github_repo = self.npm_training_repo
+                logger.info('npm bucket name is: {bucket}'.format(bucket=bucket_name))
             else:
                 continue
 
@@ -256,7 +260,7 @@ class ReportHelper:
                     # TODO - find an alternative if there is a need
                     self.invoke_emr_api(bucket_name, eco, model_version, github_repo)
                 except Exception as e:
-                    logger.exception('Unable to invoke EMR API. Reason: %r' % e)
+                    logger.error('Unable to invoke EMR API. Reason: %r' % e)
 
     def get_trending(self, mydict, top_trending_count=3):
         """Generate the top trending items list."""
