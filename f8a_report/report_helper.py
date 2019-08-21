@@ -183,9 +183,14 @@ class ReportHelper:
             'data_version': data_version
         }
 
+        logger.info('bucket_name for {eco}: {buck}'.format(eco=ecosystem, buck=bucket_name))
+        logger.info('github_repo for {eco}: {git}'.format(eco=ecosystem, git=github_repo))
+        logger.info('data_version for {eco}: {data}'.format(eco=ecosystem, data=data_version))
+
         try:
             # Invoke EMR API to run the retraining
             resp = requests.post(url=self.emr_api + '/api/v1/runjob', json=payload)
+            logger.info(resp.json())
             # Check for status code
             # If status is not success, log it as an error
             if resp.status_code == 200:
@@ -194,8 +199,8 @@ class ReportHelper:
             else:
                 logger.error('Error received from EMR API for {eco} ecosystem \n {resp}'.format(
                     eco=ecosystem, resp=resp.json()))
-        except Exception:
-            logger.error('Failed to invoke EMR API for {eco} ecosystem'.format(eco=ecosystem))
+        except Exception as e:
+            logger.error('Failed to invoke EMR API for {eco}, error: %r'.format(eco=ecosystem) % e)
 
     def get_training_data_for_ecosystem(self, eco, stack_dict):
         """Get Training data for an ecosystem."""
