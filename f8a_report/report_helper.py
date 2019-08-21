@@ -190,6 +190,7 @@ class ReportHelper:
         try:
             # Invoke EMR API to run the retraining
             resp = requests.post(url=self.emr_api + '/api/v1/runjob', json=payload)
+            logger.info(resp.json())
             # Check for status code
             # If status is not success, log it as an error
             if resp.status_code == 200:
