@@ -132,21 +132,25 @@ objects:
                       name: developer-analytics-audit-report-s3
                       key: bucket
                 - name: NPM_MODEL_BUCKET
-                  secretKeyRef:
-                      name: cvae-npm-insights-s3
-                      key: bucket
+                  valueFrom:
+                    secretKeyRef:
+                        name: cvae-npm-insights-s3
+                        key: bucket
                 - name: MAVEN_MODEL_BUCKET
-                  secretKeyRef:
-                      name: hpf-maven-insights-s3
-                      key: bucket
+                  valueFrom:
+                    secretKeyRef:
+                        name: hpf-maven-insights-s3
+                        key: bucket
                 - name: PYPI_MODEL_BUCKET
-                  secretKeyRef:
-                      name: hpf-pypi-insights-s3
-                      key: bucket
+                  valueFrom:
+                    secretKeyRef:
+                        name: hpf-pypi-insights-s3
+                        key: bucket
                 - name: GOLANG_MODEL_BUCKET
-                  secretKeyRef:
-                      name: golang-insights-s3
-                      key: bucket
+                  valueFrom:
+                    secretKeyRef:
+                        name: golang-insights-s3
+                        key: bucket
                 - name: GOLANG_TRAINING_REPO
                   value: ${GOLANG_TRAINING_REPO}
                 - name: MAVEN_TRAINING_REPO
