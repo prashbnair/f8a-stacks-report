@@ -134,23 +134,23 @@ objects:
                 - name: NPM_MODEL_BUCKET
                   valueFrom:
                     secretKeyRef:
-                        name: cvae-npm-insights-s3
-                        key: bucket
+                      name: cvae-npm-insights-s3
+                      key: bucket
                 - name: MAVEN_MODEL_BUCKET
                   valueFrom:
                     secretKeyRef:
-                        name: hpf-maven-insights-s3
-                        key: bucket
+                      name: hpf-maven-insights-s3
+                      key: bucket
                 - name: PYPI_MODEL_BUCKET
                   valueFrom:
                     secretKeyRef:
-                        name: hpf-pypi-insights-s3
-                        key: bucket
+                      name: hpf-pypi-insights-s3
+                      key: bucket
                 - name: GOLANG_MODEL_BUCKET
                   valueFrom:
                     secretKeyRef:
-                        name: golang-insights-s3
-                        key: bucket
+                      name: golang-insights-s3
+                      key: bucket
                 - name: GOLANG_TRAINING_REPO
                   value: ${GOLANG_TRAINING_REPO}
                 - name: MAVEN_TRAINING_REPO
