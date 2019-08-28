@@ -15,7 +15,7 @@ objects:
       description: f8a-stacks-report
   spec:
     successfulJobsHistoryLimit: 4
-    failedJobsHistoryLimit: 0
+    failedJobsHistoryLimit: 1
     concurrencyPolicy: "Forbid"
     schedule: "${CRON_SCHEDULE}"
     jobTemplate:
