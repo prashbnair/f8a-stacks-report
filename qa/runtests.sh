@@ -1,4 +1,7 @@
 #!/bin/bash
+SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
+
+pushd "${SCRIPT_DIR}/.." > /dev/null
 
 set -e
 set -x
@@ -90,3 +93,5 @@ python3 "$(which pytest)" -s --cov=f8a_report/ --cov-report term-missing --cov-f
 codecov --token=d6bd6983-0bad-4eed-b8e3-9fd1d5199257
 printf "%stests passed%s\n\n" "${GREEN}" "${NORMAL}"
 
+
+popd > /dev/null
