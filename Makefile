@@ -22,7 +22,7 @@ fast-docker-build:
 	@echo $(REGISTRY)/$(REPOSITORY):$(DEFAULT_TAG)
 
 test:
-	./runtests.sh
+	./qa/runtests.sh
 
 get-image-name:
 	@echo $(REGISTRY)/$(REPOSITORY):$(DEFAULT_TAG)
