@@ -209,13 +209,13 @@ parameters:
   displayName: Memory request
   required: true
   name: MEMORY_REQUEST
-  value: "1024Mi"
+  value: "2048Mi"
 
 - description: Memory limit
   displayName: Memory limit
   required: true
   name: MEMORY_LIMIT
-  value: "1024Mi"
+  value: "2048Mi"
 
 - description: "Golang Training Repo to fetch training file"
   displayName: Golang Training Repo
