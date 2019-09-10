@@ -209,7 +209,7 @@ parameters:
   displayName: Memory request
   required: true
   name: MEMORY_REQUEST
-  value: "2048Mi"
+  value: "1024Mi"
 
 - description: Memory limit
   displayName: Memory limit
