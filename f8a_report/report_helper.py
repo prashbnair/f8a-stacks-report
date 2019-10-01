@@ -312,7 +312,25 @@ class ReportHelper:
         else:
             return dt.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m-%d')
 
-    def normalize_worker_data(self, start_date, end_date, stack_data, worker, frequency='daily'):
+    def collate_and_retrain(self, unique_stacks, frequency='weekly'):
+        """Append stacks to 'collated-weekly' and re-train models."""
+        # Append last week's data to 'collated-weekly'; returns 'BQ+collated' data
+        collated_data = self.collate_raw_data(unique_stacks, frequency)
+        # Store ecosystem specific manifest.json and re-trains models
+        self.store_training_data(collated_data)
+
+    def create_venus_report(self, venus_input):
+        """Create venus report."""
+        # Retrieve input variables
+        frequency = venus_input[0]
+        report_name = venus_input[1]
+        template = venus_input[2]
+
+        self.save_result(frequency, report_name, template)
+        return template
+
+    def normalize_worker_data(self, start_date, end_date, stack_data, worker,
+                              frequency='daily', retrain=False):
         """Normalize worker data for reporting."""
         total_stack_requests = {'all': 0, 'npm': 0, 'maven': 0, 'pypi': 0}
 
@@ -404,21 +422,7 @@ class ReportHelper:
                 'pypi': self.populate_key_count(stacks_list['pypi'])
             }
 
-            today = dt.today()
-            # Invoke this every Monday. In Python, Monday is 0 and Sunday is 6
-            # temp fix for retraining bug
-            if today.weekday() >= 0:
-                # Collate Data from Previous Month for Model Retraining
-                collated_data = self.collate_raw_data(unique_stacks_with_recurrence_count,
-                                                      'weekly')
-                # Store ecosystem specific data to their respective Training Buckets
-                self.store_training_data(collated_data)
-
-            # Monthly data collection on the 1st of every month
-            if today.date == 1:
-                self.collate_raw_data(unique_stacks_with_recurrence_count, 'monthly')
-
-            unique_stacks_with_deps_count =\
+            unique_stacks_with_deps_count = \
                 self.set_unique_stack_deps_count(unique_stacks_with_recurrence_count)
 
             avg_response_time = {}
@@ -476,16 +480,25 @@ class ReportHelper:
                     '{} ms'.format(total_response_time['all'] / len(template['stacks_details'])),
                 'cve_report': CVE().generate_cve_report(updated_on=start_date)
             }
-            self.save_result(frequency, report_name, template)
-            return template
+
+            # monthly data collection on the 1st of every month
+            if frequency == 'monthly':
+                self.collate_raw_data(unique_stacks_with_recurrence_count, 'monthly')
+
+            # return data to re-train models or generate venus report
+            if retrain is True:
+                return unique_stacks_with_recurrence_count
+            else:
+                venus_input = [frequency, report_name, template]
+                return venus_input
         else:
             # todo: user feedback aggregation based on the recommendation task results
             return None
 
     def retrieve_worker_results(self, start_date, end_date, id_list=[], worker_list=[],
-                                frequency='daily'):
+                                frequency='daily', retrain=False):
         """Retrieve results for selected worker from RDB."""
-        result = {}
+        result_interim = {}
         # convert the elements of the id_list to sql.Literal
         # so that the SQL query statement contains the IDs within quotes
         id_list = list(map(sql.Literal, id_list))
@@ -500,10 +513,16 @@ class ReportHelper:
             self.cursor.execute(query.as_string(self.conn) % (ids, worker))
             data = json.dumps(self.cursor.fetchall())
 
-            # associate the retrieved data to the worker name
-            result[worker] = self.normalize_worker_data(start_date, end_date, data, worker,
-                                                        frequency)
-        return result
+            if retrain is True:
+                unique_stacks = self.normalize_worker_data(start_date, end_date,
+                                                           data, worker, frequency, retrain)
+                return unique_stacks
+            else:
+                # associate the retrieved data to the worker name
+                result_interim[worker] = \
+                    self.normalize_worker_data(start_date, end_date, data,
+                                               worker, frequency, retrain)
+        return result_interim
 
     def retrieve_ingestion_results(self, start_date, end_date, frequency='daily'):
         """Retrieve results for selected worker from RDB."""
@@ -721,10 +740,12 @@ class ReportHelper:
             logger.exception('Unable to store the report on S3. Reason: %r' % e)
         return template
 
-    def get_report(self, start_date, end_date, frequency='daily'):
+    def get_report(self, start_date, end_date, frequency='daily', retrain=False):
         """Generate the stacks report."""
         ids = self.retrieve_stack_analyses_ids(start_date, end_date)
+        worker_list = ['stack_aggregator_v2']
         ingestion_results = False
+
         if frequency == 'daily':
             start = datetime.datetime.now()
             result = self.retrieve_ingestion_results(start_date, end_date)
@@ -742,10 +763,32 @@ class ReportHelper:
                 logger.error('No Sentry Error Logs found in last 24 hours')
 
         if len(ids) > 0:
-            worker_result = self.retrieve_worker_results(
-                start_date, end_date, ids, ['stack_aggregator_v2'], frequency)
+            result_interim = self.retrieve_worker_results(
+                start_date, end_date, ids, worker_list, frequency, retrain)
+
+            # generate result for each worker
+            worker_result = {}
+            for worker in worker_list:
+                if worker == 'stack_aggregator_v2':
+                    worker_result[worker] = self.create_venus_report(result_interim[worker])
+                # can add results for more workers later
+
             return worker_result, ingestion_results
         else:
             logger.error('No stack analyses found from {s} to {e} to generate an aggregated report'
                          .format(s=start_date, e=end_date))
             return False, ingestion_results
+
+    def re_train(self, start_date, end_date, frequency='weekly', retrain=True):
+        """Re-trains models for all ecosystems."""
+        ids = self.retrieve_stack_analyses_ids(start_date, end_date)
+
+        if len(ids) > 0:
+            unique_stacks = self.retrieve_worker_results(
+                start_date, end_date, ids, ['stack_aggregator_v2'], frequency, retrain)
+            # collate stacks and re-train models for all ecosystems
+            self.collate_and_retrain(unique_stacks, frequency)
+
+        else:
+            logger.error('No stack analyses found from {s} to {e} to re-train models'
+                         .format(s=start_date, e=end_date))
