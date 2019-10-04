@@ -21,7 +21,7 @@ def main():
     today = dt.today()
     start_date = (today - timedelta(days=1)).strftime('%Y-%m-%d')
     end_date = today.strftime('%Y-%m-%d')
-    
+
     # Generate daily venus report
     response, ingestion_results = r.get_report(start_date, end_date, 'daily', retrain=False)
     logger.debug('Daily report data from {s} to {e}'.format(s=start_date, e=end_date))
@@ -30,7 +30,7 @@ def main():
 
     # Regular Cleaning up of celery_taskmeta tables
     r.cleanup_db_tables()
-    
+
     # Weekly re-training of models
     if today.weekday() == 0:
         start_date_wk = (today - timedelta(days=7)).strftime('%Y-%m-%d')
