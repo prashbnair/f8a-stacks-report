@@ -794,7 +794,6 @@ class ReportHelper:
             result = self.sentry_helper.retrieve_sentry_logs(start_date, end_date)
             if not result:
                 logger.error('No Sentry Error Logs found in last 24 hours')
-        ids = []
         if len(ids) > 0:
             result_interim = self.retrieve_worker_results(
                 start_date, end_date, ids, worker_list, frequency, retrain)
@@ -815,7 +814,6 @@ class ReportHelper:
     def re_train(self, start_date, end_date, frequency='weekly', retrain=True):
         """Re-trains models for all ecosystems."""
         ids = self.retrieve_stack_analyses_ids(start_date, end_date)
-        ids = []
         if len(ids) > 0:
             unique_stacks = self.retrieve_worker_results(
                 start_date, end_date, ids, ['stack_aggregator_v2'], frequency, retrain)
