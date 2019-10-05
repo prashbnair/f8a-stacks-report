@@ -4,6 +4,7 @@ import logging
 import json
 from datetime import datetime as dt, timedelta, date
 from report_helper import ReportHelper
+from manifest_helper import manifest_interface
 
 
 logger = logging.getLogger(__file__)
@@ -30,12 +31,13 @@ def main():
 
     # Regular Cleaning up of celery_taskmeta tables
     r.cleanup_db_tables()
-
     # Weekly re-training of models
     if today.weekday() == 0:
         start_date_wk = (today - timedelta(days=7)).strftime('%Y-%m-%d')
         end_date_wk = today.strftime('%Y-%m-%d')
         r.re_train(start_date_wk, end_date_wk, 'weekly', retrain=True)
+        stacks = r.retrieve_stack_analyses_content(start_date, end_date)
+        manifest_interface(stacks)
 
     # Generate a monthly venus report
     if time_to_generate_monthly_report(today):

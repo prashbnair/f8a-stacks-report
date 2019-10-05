@@ -113,6 +113,22 @@ class ReportHelper:
 
         return id_list
 
+    def retrieve_stack_analyses_content(self, start_date, end_date):
+        """Retrieve results for stack analyses requests."""
+        try:
+            start_date = self.validate_and_process_date('2019-02-02')
+            end_date = self.validate_and_process_date(end_date)
+        except ValueError:
+            raise ValueError("Invalid date format")
+
+        query = sql.SQL('SELECT {} FROM {} WHERE {} BETWEEN \'%s\' AND \'%s\'').format(
+            sql.Identifier('requestJson'), sql.Identifier('stack_analyses_request'),
+            sql.Identifier('submitTime')
+        )
+        self.cursor.execute(query.as_string(self.conn) % (start_date, end_date))
+
+        return self.cursor.fetchall()
+
     def flatten_list(self, alist):
         """Convert a list of lists to a single list."""
         return list(itertools.chain.from_iterable(alist))
@@ -778,7 +794,7 @@ class ReportHelper:
             result = self.sentry_helper.retrieve_sentry_logs(start_date, end_date)
             if not result:
                 logger.error('No Sentry Error Logs found in last 24 hours')
-
+        ids = []
         if len(ids) > 0:
             result_interim = self.retrieve_worker_results(
                 start_date, end_date, ids, worker_list, frequency, retrain)
@@ -799,7 +815,7 @@ class ReportHelper:
     def re_train(self, start_date, end_date, frequency='weekly', retrain=True):
         """Re-trains models for all ecosystems."""
         ids = self.retrieve_stack_analyses_ids(start_date, end_date)
-
+        ids = []
         if len(ids) > 0:
             unique_stacks = self.retrieve_worker_results(
                 start_date, end_date, ids, ['stack_aggregator_v2'], frequency, retrain)
