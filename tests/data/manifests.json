@@ -1,0 +1,74 @@
+[
+  [
+    {
+      "manifest": [
+        {
+          "filename": "npmlist.json",
+          "content": "{\n\t\"name\":\"color-choser\",\n\t\"version\":\"2.4.1\",\n\t\"dependencies\":{\n\t\t\"bootstrap\":{\n\t\t\t\"version\":\"4.3.1\"\n\t\t},\n\t\t\"supports-color\":{\n\t\t\t\"version\":\"5.5.0\",\n\t\t\t\"dependencies\":{\n\t\t\t\t\"has-flag\":{\n\t\t\t\t\"version\":\"3.0.0\"}\n\t\t\t}\n\t\t},\n\t\t\"url-parse\":{\n\t\t\t\"version\":\"1.4.1\",\n\t\t\t\"dependencies\":{\n\t\t\t\t\"querystringify\":{\n\t\t\t\t\t\"version\":\"2.1.1\"\n\t\t\t\t},\n\t\t\t\t\"requires-port\":{\n\t\t\t\t\t\"version\":\"1.0.0\"\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}",
+          "ecosystem": "npm",
+          "filepath": "/tmp/bin"
+        }
+      ]
+    }
+  ],
+  [
+    {
+      "manifest": [
+        {
+          "filename": "npmlist.json",
+          "content": "{\n\t\"name\":\"color-thrower\",\n\t\"version\":\"2.4.1\",\n\t\"dependencies\":{\n\t\t\"bootstrap\":{\n\t\t\t\"version\":\"4.3.1\"\n\t\t},\n\t\t\"supports-color\":{\n\t\t\t\"version\":\"5.5.0\",\n\t\t\t\"dependencies\":{\n\t\t\t\t\"has-flag\":{\n\t\t\t\t\"version\":\"3.0.0\"}\n\t\t\t}\n\t\t},\n\t\t\"url-parse\":{\n\t\t\t\"version\":\"1.4.1\",\n\t\t\t\"dependencies\":{\n\t\t\t\t\"querystringify\":{\n\t\t\t\t\t\"version\":\"2.1.1\"\n\t\t\t\t},\n\t\t\t\t\"requires-port\":{\n\t\t\t\t\t\"version\":\"1.0.0\"\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}",
+          "ecosystem": "npm",
+          "filepath": "/tmp/bin"
+        }
+      ]
+    }
+  ],
+  [
+    {
+      "manifest": [
+        {
+          "filename": "pylist.json",
+          "content": "[{\"package\": \"requests\", \"version\": \"2.22.0\", \"deps\": [{\"package\": \"urllib3\", \"version\": \"1.25.6\"}, {\"package\": \"chardet\", \"version\": \"3.0.4\"}, {\"package\": \"certifi\", \"version\": \"2019.9.11\"}, {\"package\": \"idna\", \"version\": \"2.8\"}]}]",
+          "ecosystem": "pypi",
+          "filepath": "/tmp/bin"
+        }
+      ]
+    }
+  ],
+  [
+    {
+      "manifest": [
+        {
+          "filename": "pylist.json",
+          "content": "[{\"package\": \"requests2\", \"version\": \"2.22.0\", \"deps\": [{\"package\": \"urllib3\", \"version\": \"1.25.6\"}, {\"package\": \"chardet\", \"version\": \"3.0.4\"}, {\"package\": \"certifi\", \"version\": \"2019.9.11\"}, {\"package\": \"idna\", \"version\": \"2.8\"}]}]",
+          "ecosystem": "pypi",
+          "filepath": "/tmp/bin"
+        }
+      ]
+    }
+  ],
+  [
+    {
+      "manifest": [
+        {
+          "filename": "dependencies.txt",
+          "content": "digraph \"org.example:jpademo:jar:1.0\" { \n\t\"org.example:jpademo:jar:1.0\" -> \"junit:junit:jar:3.8.1:test\" ; \n\t\"org.example:jpademo:jar:1.0\" -> \"org.hibernate:hibernate-core:jar:3.6.3.Final:compile\" ; \n\t\"org.example:jpademo:jar:1.0\" -> \"org.hibernate:hibernate:jar:3.2.5.ga:compile\" ; \n\t\"org.example:jpademo:jar:1.0\" -> \"org.hibernate:hibernate-entitymanager:jar:3.3.2.GA:compile\" ; \n\t\"org.example:jpademo:jar:1.0\" -> \"org.hibernate:ejb3-persistence:jar:1.0.1.GA:compile\" ; \n\t\"org.example:jpademo:jar:1.0\" -> \"mysql:mysql-connector-java:jar:5.1.14:compile\" ; \n\t\"org.example:jpademo:jar:1.0\" -> \"org.slf4j:slf4j-api:jar:1.6.1:compile\" ; \n\t\"org.example:jpademo:jar:1.0\" -> \"org.slf4j:log4j-over-slf4j:jar:1.6.1:compile\" ; \n\t\"org.example:jpademo:jar:1.0\" -> \"org.slf4j:slf4j-simple:jar:1.6.1:compile\" ; \n\t\"org.hibernate:hibernate-core:jar:3.6.3.Final:compile\" -> \"antlr:antlr:jar:2.7.6:compile\" ; \n\t\"org.hibernate:hibernate-core:jar:3.6.3.Final:compile\" -> \"commons-collections:commons-collections:jar:3.1:compile\" ; \n\t\"org.hibernate:hibernate-core:jar:3.6.3.Final:compile\" -> \"dom4j:dom4j:jar:1.6.1:compile\" ; \n\t\"org.hibernate:hibernate-core:jar:3.6.3.Final:compile\" -> \"org.hibernate:hibernate-commons-annotations:jar:3.2.0.Final:compile\" ; \n\t\"org.hibernate:hibernate-core:jar:3.6.3.Final:compile\" -> \"org.hibernate.javax.persistence:hibernate-jpa-2.0-api:jar:1.0.0.Final:compile\" ; \n\t\"org.hibernate:hibernate-core:jar:3.6.3.Final:compile\" -> \"javax.transaction:jta:jar:1.1:compile\" ; \n\t\"org.hibernate:hibernate:jar:3.2.5.ga:compile\" -> \"net.sf.ehcache:ehcache:jar:1.2.3:compile\" ; \n\t\"org.hibernate:hibernate:jar:3.2.5.ga:compile\" -> \"commons-logging:commons-logging:jar:1.0.4:compile\" ; \n\t\"org.hibernate:hibernate:jar:3.2.5.ga:compile\" -> \"asm:asm-attrs:jar:1.5.3:compile\" ; \n\t\"org.hibernate:hibernate:jar:3.2.5.ga:compile\" -> \"cglib:cglib:jar:2.1_3:compile\" ; \n\t\"org.hibernate:hibernate:jar:3.2.5.ga:compile\" -> \"asm:asm:jar:1.5.3:compile\" ; \n\t\"org.hibernate:hibernate-entitymanager:jar:3.3.2.GA:compile\" -> \"org.hibernate:hibernate-annotations:jar:3.3.1.GA:compile\" ; \n\t\"org.hibernate:hibernate-entitymanager:jar:3.3.2.GA:compile\" -> \"javassist:javassist:jar:3.4.GA:compile\" ; \n } ",
+          "ecosystem": "maven",
+          "filepath": "/tmp/bin"
+        }
+      ]
+    }
+  ],
+  [
+    {
+      "manifest": [
+        {
+          "filename": "dependencies.txt",
+          "content": "digraph \"org.example:BLEBLE:jar:1.0\" { \n\t\"org.example:jpademo:jar:1.0\" -> \"junit:junit:jar:3.8.1:test\" ; \n\t\"org.example:jpademo:jar:1.0\" -> \"org.hibernate:hibernate-core:jar:3.6.3.Final:compile\" ; \n\t\"org.example:jpademo:jar:1.0\" -> \"org.hibernate:hibernate:jar:3.2.5.ga:compile\" ; \n\t\"org.example:jpademo:jar:1.0\" -> \"org.hibernate:hibernate-entitymanager:jar:3.3.2.GA:compile\" ; \n\t\"org.example:jpademo:jar:1.0\" -> \"org.hibernate:ejb3-persistence:jar:1.0.1.GA:compile\" ; \n\t\"org.example:jpademo:jar:1.0\" -> \"mysql:mysql-connector-java:jar:5.1.14:compile\" ; \n\t\"org.example:jpademo:jar:1.0\" -> \"org.slf4j:slf4j-api:jar:1.6.1:compile\" ; \n\t\"org.example:jpademo:jar:1.0\" -> \"org.slf4j:log4j-over-slf4j:jar:1.6.1:compile\" ; \n\t\"org.example:jpademo:jar:1.0\" -> \"org.slf4j:slf4j-simple:jar:1.6.1:compile\" ; \n\t\"org.hibernate:hibernate-core:jar:3.6.3.Final:compile\" -> \"antlr:antlr:jar:2.7.6:compile\" ; \n\t\"org.hibernate:hibernate-core:jar:3.6.3.Final:compile\" -> \"commons-collections:commons-collections:jar:3.1:compile\" ; \n\t\"org.hibernate:hibernate-core:jar:3.6.3.Final:compile\" -> \"dom4j:dom4j:jar:1.6.1:compile\" ; \n\t\"org.hibernate:hibernate-core:jar:3.6.3.Final:compile\" -> \"org.hibernate:hibernate-commons-annotations:jar:3.2.0.Final:compile\" ; \n\t\"org.hibernate:hibernate-core:jar:3.6.3.Final:compile\" -> \"org.hibernate.javax.persistence:hibernate-jpa-2.0-api:jar:1.0.0.Final:compile\" ; \n\t\"org.hibernate:hibernate-core:jar:3.6.3.Final:compile\" -> \"javax.transaction:jta:jar:1.1:compile\" ; \n\t\"org.hibernate:hibernate:jar:3.2.5.ga:compile\" -> \"net.sf.ehcache:ehcache:jar:1.2.3:compile\" ; \n\t\"org.hibernate:hibernate:jar:3.2.5.ga:compile\" -> \"commons-logging:commons-logging:jar:1.0.4:compile\" ; \n\t\"org.hibernate:hibernate:jar:3.2.5.ga:compile\" -> \"asm:asm-attrs:jar:1.5.3:compile\" ; \n\t\"org.hibernate:hibernate:jar:3.2.5.ga:compile\" -> \"cglib:cglib:jar:2.1_3:compile\" ; \n\t\"org.hibernate:hibernate:jar:3.2.5.ga:compile\" -> \"asm:asm:jar:1.5.3:compile\" ; \n\t\"org.hibernate:hibernate-entitymanager:jar:3.3.2.GA:compile\" -> \"org.hibernate:hibernate-annotations:jar:3.3.1.GA:compile\" ; \n\t\"org.hibernate:hibernate-entitymanager:jar:3.3.2.GA:compile\" -> \"javassist:javassist:jar:3.4.GA:compile\" ; \n } ",
+          "ecosystem": "maven",
+          "filepath": "/tmp/bin"
+        }
+      ]
+    }
+  ]
+]

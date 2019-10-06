@@ -54,3 +54,14 @@ def test_list_objects():
     assert len(obj['objects']) > 0
     data = S3.list_objects('dummy', 'weekly')
     assert len(data['objects']) == 0
+
+
+@mock_s3
+def test_store_file_object():
+    """Test to validate list_object method."""
+    s3 = boto3.client('s3')
+    s3.create_bucket(Bucket=BUCKET)
+    S3 = S3Helper(aws_access_key_id=AWS_KEY, aws_secret_access_key=AWS_SECRET)
+    S3.store_file_object('tests/data/dev/weekly/data.json', BUCKET, 'dev/weekly/data.json')
+    obj = S3.list_objects(BUCKET, 'weekly')
+    assert len(obj['objects']) > 0

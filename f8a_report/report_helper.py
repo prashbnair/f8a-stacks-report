@@ -64,6 +64,7 @@ class ReportHelper:
             'PYPI_TRAINING_REPO', 'https://github.com/fabric8-analytics/f8a-pypi-insights')
 
         self.emr_api = os.getenv('EMR_API', 'http://f8a-emr-deployment:6006')
+        self.stacks_data = None
 
     def cleanup_db_tables(self):
         """Cleanup meta data tables on a periodic basis."""
@@ -93,19 +94,26 @@ class ReportHelper:
     def retrieve_stack_analyses_ids(self, start_date, end_date):
         """Retrieve results for stack analyses requests."""
         try:
+            # start_date from which data is to be fetched
             start_date = self.validate_and_process_date(start_date)
+            # end_date up to which data is to be fetched
             end_date = self.validate_and_process_date(end_date)
         except ValueError:
+            # checks Invalid date format
             raise ValueError("Invalid date format")
-
-        query = sql.SQL('SELECT {} FROM {} WHERE {} BETWEEN \'%s\' AND \'%s\'').format(
-            sql.Identifier('id'), sql.Identifier('stack_analyses_request'),
+        # Query to fetch Stack Analysis Ids from start_date to end_date
+        query = sql.SQL('SELECT {},{} FROM {} WHERE {} BETWEEN \'%s\' AND \'%s\'').format(
+            sql.Identifier('id'), sql.Identifier('requestJson'),
+            sql.Identifier('stack_analyses_request'),
             sql.Identifier('submitTime')
         )
+        # Executing Query
         self.cursor.execute(query.as_string(self.conn) % (start_date, end_date))
-
+        # Fetching all results
         rows = self.cursor.fetchall()
-
+        if self.get_time_delta(start_date, end_date) >= datetime.timedelta(7):
+            self.stacks_data = rows
+        # Appending all the stack-ids in a list
         id_list = []
         for row in rows:
             for col in row:
@@ -113,20 +121,34 @@ class ReportHelper:
 
         return id_list
 
+    @staticmethod
+    def get_time_delta(start_date, end_date):
+        """Get Timedelta object."""
+        return dt.strptime(end_date, '%Y-%m-%d') - dt.strptime(start_date, '%Y-%m-%d')
+
     def retrieve_stack_analyses_content(self, start_date, end_date):
         """Retrieve results for stack analyses requests."""
         try:
-            start_date = self.validate_and_process_date('2019-02-02')
+            # start_date from which data is to be fetched
+            start_date = self.validate_and_process_date(start_date)
+            # end_date up to which data is to be fetched
             end_date = self.validate_and_process_date(end_date)
         except ValueError:
+            # checks Invalid date format
             raise ValueError("Invalid date format")
 
+        # If stacks data exists
+        if self.stacks_data:
+            return self.stacks_data
+
+        # Query to fetch Stack Analysis manifests data from start_date to end_date
         query = sql.SQL('SELECT {} FROM {} WHERE {} BETWEEN \'%s\' AND \'%s\'').format(
             sql.Identifier('requestJson'), sql.Identifier('stack_analyses_request'),
             sql.Identifier('submitTime')
         )
+        # Executing Query
         self.cursor.execute(query.as_string(self.conn) % (start_date, end_date))
-
+        # Fetching all results
         return self.cursor.fetchall()
 
     def flatten_list(self, alist):
