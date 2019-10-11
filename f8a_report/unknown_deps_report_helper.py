@@ -32,8 +32,10 @@ class UnknownDepsReportHelper:
                 unknown_deps = result.get('stacks_summary', {}).get(eco, {}).\
                     get('unique_unknown_dependencies_with_frequency', {})
                 for k, v in unknown_deps.items():
-                    pkg, ver = k.split()[0], k.split()[1]
-                    deps.append({'name': pkg, 'version': ver})
+                    pkg_ver = k.split()
+                    if len(pkg_ver) == 2:
+                        pkg, ver = pkg_ver[0], pkg_ver[1]
+                        deps.append({'name': pkg, 'version': ver})
             unknown_deps_list[eco] = deps
 
         return unknown_deps_list
