@@ -29,7 +29,7 @@ class UnknownDepsReportHelper:
                     try:
                         pkg, ver = pkg_ver[0], pkg_ver[1]
                         deps.append({'name': pkg, 'version': ver})
-                    except IndexError as e:
+                    except IndexError:
                         logger.info("Incorrect name value pair found in unknown list {}".format(k))
             unknown_deps_list[eco] = deps
         return unknown_deps_list
