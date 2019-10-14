@@ -3,6 +3,9 @@
 from datetime import datetime as dt, timedelta
 from graph_report_generator import find_ingested_epv
 from s3_helper import S3Helper
+import logging
+
+logger = logging.getLogger(__file__)
 
 
 class UnknownDepsReportHelper:
@@ -11,6 +14,25 @@ class UnknownDepsReportHelper:
     def __init__(self):
         """Init method for UnknownDepReportHelper."""
         self.s3 = S3Helper()
+
+    def get_unknown_list(self, result):
+        """Create a list of unknown deps."""
+        ecosystem_list = ['npm', 'maven', 'pypi']
+        unknown_deps_list = {}
+        for eco in ecosystem_list:
+            deps = []
+            if result:
+                unknown_deps = result.get('stacks_summary', {}).get(eco, {}). \
+                    get('unique_unknown_dependencies_with_frequency', {})
+                for k, v in unknown_deps.items():
+                    pkg_ver = k.split()
+                    try:
+                        pkg, ver = pkg_ver[0], pkg_ver[1]
+                        deps.append({'name': pkg, 'version': ver})
+                    except IndexError:
+                        logger.info("Incorrect name value pair found in unknown list {}".format(k))
+            unknown_deps_list[eco] = deps
+        return unknown_deps_list
 
     def get_past_unknown_deps(self):
         """Retrieve the list of unknown deps."""
@@ -24,19 +46,7 @@ class UnknownDepsReportHelper:
                                           obj_key=past_obj_key)
 
         # Return the list of unknown dependencies found
-        ecosystem_list = ['npm', 'maven', 'pypi']
-        unknown_deps_list = {}
-        for eco in ecosystem_list:
-            deps = []
-            if result:
-                unknown_deps = result.get('stacks_summary', {}).get(eco, {}).\
-                    get('unique_unknown_dependencies_with_frequency', {})
-                for k, v in unknown_deps.items():
-                    pkg, ver = k.split()[0], k.split()[1]
-                    deps.append({'name': pkg, 'version': ver})
-            unknown_deps_list[eco] = deps
-
-        return unknown_deps_list
+        return self.get_unknown_list(result)
 
     def get_current_ingestion_status(self):
         """Generate ingestion report for previously unknown dependecies."""
