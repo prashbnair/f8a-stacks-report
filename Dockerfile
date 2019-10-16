@@ -7,6 +7,7 @@ WORKDIR ${APP_DIR}
 
 RUN yum install -y epel-release &&\
     yum install -y gcc git python36-pip python36-devel &&\
+    yum -y install libffi libffi-devel
     yum clean all &&\
     mkdir -p ${APP_DIR}
 
