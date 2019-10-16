@@ -34,6 +34,7 @@ prep() {
     yum -y install git which python36-pip python36-virtualenv gcc openssl-devel docker
     systemctl start docker
     pip3 install docker-compose
+    yum -y install libffi libffi-devel
 }
 
 build_image() {
