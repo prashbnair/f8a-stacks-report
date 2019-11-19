@@ -66,19 +66,31 @@ class ReportHelper:
         self.emr_api = os.getenv('EMR_API', 'http://f8a-emr-deployment:6006')
 
     def cleanup_db_tables(self):
-        """Cleanup meta data tables on a periodic basis."""
-        # Number of days to retain the data
-        num_days = os.environ.get('KEEP_DB_META_NUM_DAYS', '7')
-        # query to delete the rest of the data
-        query = sql.SQL('DELETE FROM celery_taskmeta '
-                        'WHERE DATE_DONE <= NOW() - interval \'%s day\';')
+        """Cleanup RDS data tables on a periodic basis."""
         try:
-            logger.info('Starting to clean up database tables')
+            # Number of days to retain the celery task_meta data
+            num_days_metadata = os.environ.get('KEEP_DB_META_NUM_DAYS', '7')
+            # query to delete the celery task_meta data
+            query = sql.SQL('DELETE FROM celery_taskmeta '
+                            'WHERE DATE_DONE <= NOW() - interval \'%s day\';')
+            logger.info('Starting to clean up Celery Meta tables')
             # Execute the query
-            self.cursor.execute(query.as_string(self.conn) % (num_days))
+            self.cursor.execute(query.as_string(self.conn) % (num_days_metadata))
             # Log the message returned from db cursor
             logger.info('%r' % self.cursor.statusmessage)
-            logger.info('Cleanup of database tables complete')
+            logger.info('Cleanup of Celery Meta tables complete')
+
+            # Number of days to retain the celery woker_result data
+            num_days_workerdata = os.environ.get('KEEP_WORKER_RESULT_NUM_DAYS', '60')
+            # query to delete the worker_result data
+            query = sql.SQL('DELETE FROM worker_results '
+                            'WHERE ended_at <= NOW() - interval \'%s day\';')
+            logger.info('Starting to clean up Worker Result data tables')
+            # Execute the query
+            self.cursor.execute(query.as_string(self.conn) % (num_days_workerdata))
+            # Log the message returned from db cursor
+            logger.info('%r' % self.cursor.statusmessage)
+            logger.info('Cleanup of Worker Result data tables complete')
         except Exception as e:
             logger.error('CleanupDatabaseError: %r' % e)
 

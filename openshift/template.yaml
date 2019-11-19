@@ -36,6 +36,8 @@ objects:
                   value: ${GITHUB_CVE_REPO}
                 - name: KEEP_DB_META_NUM_DAYS
                   value: ${KEEP_DB_META_NUM_DAYS}
+                - name: KEEP_WORKER_RESULT_NUM_DAYS
+                  value: ${KEEP_WORKER_RESULT_NUM_DAYS}
                 - name: AWS_S3_SECRET_ACCESS_KEY
                   valueFrom:
                     secretKeyRef:
@@ -224,11 +226,17 @@ parameters:
   name: MEMORY_LIMIT
   value: "2048Mi"
 
-- description: Keep only last n days of meta data from celery task table
+- description: Keep only last n days of meta data from celery_taskmeta table
   displayName: Keep last n days of meta data
   required: true
   name: KEEP_DB_META_NUM_DAYS
   value: "7"
+
+- description: Keep only last n days of worker result data from worker_result table
+  displayName: Keep last n days of worker result data
+  required: true
+  name: KEEP_WORKER_RESULT_NUM_DAYS
+  value: "60"
 
 - description: "Golang Training Repo to fetch training file"
   displayName: Golang Training Repo
