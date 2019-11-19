@@ -80,7 +80,7 @@ class ReportHelper:
             logger.info('%r' % self.cursor.statusmessage)
             logger.info('Cleanup of Celery Meta tables complete')
 
-            # Number of days to retain the celery task_meta data
+            # Number of days to retain the celery woker_result data
             num_days_workerdata = os.environ.get('KEEP_WORKER_RESULT_NUM_DAYS', '60')
             # query to delete the worker_result data
             query = sql.SQL('DELETE FROM worker_results '
