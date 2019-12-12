@@ -33,7 +33,7 @@ def main():
     # Regular Cleaning up of celery_taskmeta tables
     r.cleanup_db_tables()
     # Weekly re-training of models
-    if today.weekday() == 0:
+    if today.weekday() >= 0:
         logger.debug('Weekly Job Triggered')
         start_date_wk = (today - timedelta(days=7)).strftime('%Y-%m-%d')
         end_date_wk = today.strftime('%Y-%m-%d')
