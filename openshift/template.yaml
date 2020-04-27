@@ -40,6 +40,10 @@ objects:
                   value: ${KEEP_WORKER_RESULT_NUM_DAYS}
                 - name: GENERATE_MANIFESTS
                   value: ${GENERATE_MANIFESTS}
+                - name: SENTRY_API_ISSUES
+                  value: ${SENTRY_API_ISSUES}
+                - name: SENTRY_API_TAGS
+                  value: ${SENTRY_API_TAGS}
                 - name: AWS_S3_SECRET_ACCESS_KEY
                   valueFrom:
                     secretKeyRef:
