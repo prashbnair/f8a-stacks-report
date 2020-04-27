@@ -15,12 +15,10 @@ class SentryReportHelper:
     def __init__(self):
         """Init method for SentryReportHelper."""
         self.s3 = S3Helper()
-        self.sentry_api_issues = os.getenv('SENTRY_URL', '')
-        self.sentry_api_tags = self.sentry_api_issues + "/api/0/issues/"
-        if self.sentry_api_issues == "https://sentry.stage.devshift.net":
-            self.sentry_api_issues += "/api/0/projects/sentry/fabric8-analytics-stage/issues/"
-        else:
-            self.sentry_api_issues += "/api/0/projects/sentry/fabric8-analytics-production/issues/"
+        self.sentry_url = os.getenv('SENTRY_URL', 'https://sentry.devshift.net')
+        self.sentry_api_issues = self.sentry_url + os.getenv(
+            'SENTRY_API_ISSUES', '/api/0/projects/sentry/fabric8-analytics-production/issues/')
+        self.sentry_api_tags = self.sentry_url + os.getenv('SENTRY_API_TAGS', '/api/0/issues/')
         self.sentry_token = os.getenv('SENTRY_AUTH_TOKEN', '')
 
     def retrieve_sentry_logs(self, start_date, end_date):
