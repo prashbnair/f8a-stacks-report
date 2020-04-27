@@ -285,3 +285,15 @@ parameters:
   name: GENERATE_MANIFESTS
   value: "False"
 
+- description: "Generate sentry-api-issues URL"
+  displayName: SENTRY API ISSUES
+  required: true
+  name: SENTRY_API_ISSUES
+  value: "/api/0/projects/sentry/fabric8-analytics-production/issues/"
+
+- description: "Generate sentry-api-tags URL"
+  displayName: SENTRY API TAGS
+  required: true
+  name: SENTRY_API_TAGS
+  value: "/api/0/issues/"
+
