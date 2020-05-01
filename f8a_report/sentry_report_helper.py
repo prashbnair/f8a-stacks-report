@@ -29,7 +29,7 @@ class SentryReportHelper:
             auth = 'Bearer {token}'.format(token=self.sentry_token)
             resp = requests.get(url=self.sentry_api_issues + '?statsPeriod=24h',
                                 headers={"Authorization": auth})
-            # Check for status code
+            # Checking for status code
             # If status is not success, log it as an error
             if resp.status_code == 200:
                 logger.info('Successfully invoked Sentry API \n {resp}'.format(resp=resp.json()))
