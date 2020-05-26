@@ -25,8 +25,6 @@ ecdsa==0.15               # via python-jose, sshpubkeys
 freezegun==0.3.15         # via -r requirements.in
 future==0.18.2            # via aws-xray-sdk
 idna==2.8                 # via moto, requests
-importlib-metadata==1.6.0  # via jsonschema
-importlib-resources==1.0.2  # via cfn-lint
 jinja2==2.11.1            # via moto
 jmespath==0.9.3           # via boto3, botocore
 jsondiff==1.1.2           # via moto
@@ -51,14 +49,13 @@ requests==2.21.0          # via codecov, docker, moto, requests-futures, respons
 responses==0.10.12        # via moto
 rsa==4.0                  # via python-jose
 s3transfer==0.3.3         # via boto3
-six==1.12.0               # via aws-sam-translator, cfn-lint, cryptography, docker, ecdsa, freezegun, jsonschema, moto, pyrsistent, python-dateutil, python-jose, responses, websocket-client
+six==1.12.0               # via aws-sam-translator, cfn-lint, cryptography, docker, ecdsa, freezegun, jsonschema, moto, python-dateutil, python-jose, responses, websocket-client
 sshpubkeys==3.1.0         # via moto
-urllib3==1.24.1           # via botocore, requests
+urllib3==1.24.2           # via botocore, requests
 websocket-client==0.57.0  # via docker
 werkzeug==1.0.1           # via moto
 wrapt==1.12.1             # via aws-xray-sdk
 xmltodict==0.12.0         # via moto
-zipp==3.1.0               # via importlib-metadata
 zope.interface==4.6.0     # via datetime
 
 # The following packages are considered to be unsafe in a requirements file:
