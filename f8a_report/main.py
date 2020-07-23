@@ -47,11 +47,11 @@ def main():
     end_date_wk = today.strftime('%Y-%m-%d')
     if today.weekday() == 0:
         logger.info('Weekly Job Triggered')
-        try:
-            r.re_train(start_date_wk, end_date_wk, 'weekly', retrain=True)
-        except Exception as e:
-            logger.error("Exception in Retraining {}".format(e))
-            pass
+        # try:
+        #     r.re_train(start_date_wk, end_date_wk, 'weekly', retrain=True)
+        # except Exception as e:
+        #     logger.error("Exception in Retraining {}".format(e))
+        #     pass
         logger.info(os.environ.get('GENERATE_MANIFESTS', 'False'))
         if os.environ.get('GENERATE_MANIFESTS', 'False') in ('True', 'true', '1'):
             logger.info('Generating Manifests based on last 1 week Stack Analyses calls.')
