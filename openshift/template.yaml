@@ -26,7 +26,7 @@ objects:
             containers:
             - name: f8a-stacks-report
               image: "${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${IMAGE_TAG}"
-              args: ["${MAIN_FILE}"]
+              args: ["${ENTRY_POINT}"]
               imagePullPolicy: Always
               env:
                 - name: BAYESIAN_GREMLIN_HTTP_SERVICE_HOST
@@ -208,10 +208,10 @@ parameters:
   name: IMAGE_TAG
   value: "latest"
 
-- description: Main file to execute
-  displayName: Main file
+- description: Entry point for docker image
+  displayName: Entry point
   required: true
-  name: MAIN_FILE
+  name: ENTRY_POINT
   value: "f8a_report/stack_report_main.py"
 
 - description: Suffix added to the name to identify the job

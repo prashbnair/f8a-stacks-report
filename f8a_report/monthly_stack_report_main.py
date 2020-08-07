@@ -20,8 +20,8 @@ def main():
     last_month_end_date = last_day_of_prev_month.strftime('%Y-%m-%d')
 
     # Monthly Report for v2
-    logger.info(f'Generating Monthly report v2 from '
-                f'{last_month_first_date} to {last_month_end_date}')
+    logger.info('Generating Monthly report v2 from %s to %s',
+                last_month_first_date, last_month_end_date)
     report_builder_v2.get_report(last_month_first_date, last_month_end_date, 'monthly')
 
 

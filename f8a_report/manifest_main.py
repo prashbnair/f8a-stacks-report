@@ -17,7 +17,8 @@ def main():
     start_date_wk = (today - timedelta(days=7)).strftime('%Y-%m-%d')
     end_date_wk = today.strftime('%Y-%m-%d')
 
-    logger.info(os.environ.get('GENERATE_MANIFESTS', 'False'))
+    logger.info("Value of generate_manifest flag is %s",
+                os.environ.get('GENERATE_MANIFESTS', 'False'))
     if os.environ.get('GENERATE_MANIFESTS', 'False') in ('True', 'true', '1'):
         logger.info('Generating Manifests based on last 1 week Stack Analyses calls.')
         stacks = r.retrieve_stack_analyses_content(start_date_wk, end_date_wk)

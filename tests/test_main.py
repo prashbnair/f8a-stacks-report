@@ -1,6 +1,6 @@
 """Tests for main module."""
 
-from f8a_report.stack_report_main import time_to_generate_monthly_report, main
+from f8a_report.stack_report_main import main
 from unittest import mock
 from freezegun import freeze_time
 import datetime
@@ -37,15 +37,6 @@ class MockReportHelper(ReportHelper):
     def retrieve_stack_analyses_content(*args, **kwargs):
         """Mock retrieve_stack_analyses_content."""
         return True, args, kwargs
-
-
-def test_time_to_generate_monthly_report():
-    """Test the function time_to_generate_monthly_report."""
-    today = TodayMockClass(1)
-    assert time_to_generate_monthly_report(today) is True
-
-    today = TodayMockClass(30)
-    assert time_to_generate_monthly_report(today) is False
 
 
 @mock.patch('f8a_report.stack_report_main.StackReportBuilder.get_report')
