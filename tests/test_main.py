@@ -40,7 +40,7 @@ class MockReportHelper(ReportHelper):
 
 
 @mock.patch('f8a_report.stack_report_main.StackReportBuilder.get_report')
-@mock.patch('f8a_report.stack_report_main.ReportHelper.get_report', return_value=[{}, True])
+@mock.patch('f8a_report.stack_report_main.ReportHelper.get_report', return_value=[{}, True, {}])
 def test_main(_mock1, _mock2):
     """Test the function main."""
     resp = main()

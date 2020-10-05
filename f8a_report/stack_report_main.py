@@ -4,6 +4,7 @@ import logging
 from datetime import datetime as dt, timedelta
 from helpers.report_helper import ReportHelper
 from v2.report_generator import StackReportBuilder
+from helpers.ingestion_helper import ingest_epv
 
 logger = logging.getLogger(__file__)
 
@@ -15,11 +16,14 @@ def main():
     today = dt.today()
     start_date = (today - timedelta(days=1)).strftime('%Y-%m-%d')
     end_date = today.strftime('%Y-%m-%d')
+    missing_latest_nodes = {}
+    response = {}
 
     # Daily Venus Report v1
     logger.info('Generating Daily report v1 from %s to %s', start_date, end_date)
     try:
-        response, ingestion_results = r.get_report(start_date, end_date, 'daily', retrain=False)
+        response, missing_latest_nodes = r.get_report(
+            start_date, end_date, 'daily', retrain=False)
         logger.info('Daily report v1 Processed.')
     except Exception:
         logger.exception("Error Generating v1 report")
@@ -32,6 +36,10 @@ def main():
     except Exception as e:
         logger.exception("Error Generating v2 report")
         raise e
+
+    # After all the reports are generated,
+    # trigger ingestion flow for the packages which are missing a version from Graph DB.
+    ingest_epv(missing_latest_nodes)
 
     return response
 
