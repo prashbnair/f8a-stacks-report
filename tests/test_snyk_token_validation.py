@@ -2,7 +2,7 @@
 import unittest
 from unittest.mock import patch
 import f8a_report.snyk_token_validation_main as token_validation
-from f8a_report.helpers.db_gateway import TokenValidationQueries
+from f8a_report.snyk_token_validation_main import TokenValidationQueries
 
 
 class TestSnykTokenValidation(unittest.TestCase):
