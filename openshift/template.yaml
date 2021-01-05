@@ -63,6 +63,8 @@ objects:
                   value: "30"
                 - name: KEEP_STACK_ANALYSES_REQUESTS_NUM_DAYS
                   value: "180"
+                - name: KEEP_RECOMMENDATION_FEEDBACK_NUM_DAYS
+                  value: "180"
                 - name: KEEP_API_REQUESTS_NUM_DAYS
                   value: "180"   
                 - name: SNYK_API_TOKEN_VALIDATION_URL
@@ -332,4 +334,3 @@ parameters:
   required: true
   name: SENTRY_API_TAGS
   value: "/api/0/issues/"
-
